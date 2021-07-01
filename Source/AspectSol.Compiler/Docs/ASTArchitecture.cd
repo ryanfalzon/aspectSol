@@ -1,0 +1,410 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="AspectSol.Compiler.Models.AST.AddressContractSelectorNode" Collapsed="true">
+    <Position X="33.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\AddressContractSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.AppendStatementNode" Collapsed="true">
+    <Position X="72" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAAQAAAIAAAgAAAAAAAAAAAAAAAAIAAA=</HashCode>
+      <FileName>Models\AST\AppendStatementNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ConstantKeySelectorNode" Collapsed="true">
+    <Position X="38.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAgAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ConstantKeySelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ContractSelectorNode" Collapsed="true">
+    <Position X="19.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ContractSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.DecoratorNode" Collapsed="true">
+    <Position X="24.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\DecoratorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.DefinitionDecoratorNode" Collapsed="true">
+    <Position X="26" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\DefinitionDecoratorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.DefinitionSelectorNode" Collapsed="true">
+    <Position X="56.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAABAAAAAAIAAABAAAAA=</HashCode>
+      <FileName>Models\AST\DefinitionSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.DefinitionSyntaxNode" Collapsed="true">
+    <Position X="8" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\DefinitionSyntaxNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.DictionaryElementVariableNameSelectoreNode" Collapsed="true">
+    <Position X="51.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAAAAAAAAAAAAQAAAEAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\DictionaryElementVariableNameSelectoreNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.FunctionSelectorNode" Collapsed="true">
+    <Position X="13.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\FunctionSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ImplementingDefinitionDecoratorNode" Collapsed="true">
+    <Position X="27" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ImplementingDefinitionDecoratorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.InstanceDefinitionSyntaxNode" Collapsed="true">
+    <Position X="9" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAACQAAAAAAAAAAAAAAAAABAAAAAAAEAA=</HashCode>
+      <FileName>Models\AST\InstanceDefinitionSyntaxNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.InstanceSelectorNode" Collapsed="true">
+    <Position X="49.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\InstanceSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.InterfaceContractSelectorNode" Collapsed="true">
+    <Position X="20.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAAAAAACAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\InterfaceContractSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.InterfaceNode" Collapsed="true">
+    <Position X="65.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAABAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\InterfaceNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.InterfaceSelectorNode" Collapsed="true">
+    <Position X="60.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\InterfaceSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.InterfaceSyntaxNode" Collapsed="true">
+    <Position X="4.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAQAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\InterfaceSyntaxNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.KeySelectorNode" Collapsed="true">
+    <Position X="38.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\KeySelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.LocationNode" Collapsed="true">
+    <Position X="15.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\LocationNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.MappingSelectorNode" Collapsed="true">
+    <Position X="45" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAABAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\MappingSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ModificationStatementNode" Collapsed="true">
+    <Position X="74.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIEAAAAAAQAAAAAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ModificationStatementNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ModificationTypeNode" Collapsed="true">
+    <Position X="31.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ModificationTypeNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ModifierNode" Collapsed="true">
+    <Position X="11.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAQAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ModifierNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ModifierSyntaxNode" Collapsed="true">
+    <Position X="11.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAIAA=</HashCode>
+      <FileName>Models\AST\ModifierSyntaxNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.NameContractSelectorNode" Collapsed="true">
+    <Position X="18" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\NameContractSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.NameFunctionSelectorNode" Collapsed="true">
+    <Position X="13.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAACAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\NameFunctionSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.NameInstanceSelectorNode" Collapsed="true">
+    <Position X="49.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\NameInstanceSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.NameInterfaceSelectorNode" Collapsed="true">
+    <Position X="60.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\NameInterfaceSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.NamePropertySelectorNode" Collapsed="true">
+    <Position X="40.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAABAAAA=</HashCode>
+      <FileName>Models\AST\NamePropertySelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.NameVariableNameSelectorNode" Collapsed="true">
+    <Position X="54" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAEAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\NameVariableNameSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.Node" Collapsed="true">
+    <Position X="39.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\Node.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ParameterNode" Collapsed="true">
+    <Position X="69.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAQAAAAAAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ParameterNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.PlacementNode" Collapsed="true">
+    <Position X="2.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAgAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\PlacementNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.PropertySelectorNode" Collapsed="true">
+    <Position X="40.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAQAAAAA=</HashCode>
+      <FileName>Models\AST\PropertySelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ReferenceDefinitionSyntaxNode" Collapsed="true">
+    <Position X="6.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAAACQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ReferenceDefinitionSyntaxNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ReturnSelectorNode" Collapsed="true">
+    <Position X="47.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAgAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ReturnSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.ReturnTypeNode" Collapsed="true">
+    <Position X="29.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\ReturnTypeNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.SelectorNode" Collapsed="true">
+    <Position X="47.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\SelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.SenderNode" Collapsed="true">
+    <Position X="67.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\SenderNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.StatementNode" Collapsed="true">
+    <Position X="73.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\StatementNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.SyntaxNode" Collapsed="true">
+    <Position X="8" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\SyntaxNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.TaggedDefinitionDecoratorNode" Collapsed="true">
+    <Position X="24.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAEAAAAAA=</HashCode>
+      <FileName>Models\AST\TaggedDefinitionDecoratorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.TypeVariableTypeSelectorNode" Collapsed="true">
+    <Position X="36" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\TypeVariableTypeSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.VariableDecoratorNode" Collapsed="true">
+    <Position X="22.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\VariableDecoratorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.VariableNameSelectorNode" Collapsed="true">
+    <Position X="53" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\VariableNameSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.VariableNode" Collapsed="true">
+    <Position X="63" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAQAAAAAAAA=</HashCode>
+      <FileName>Models\AST\VariableNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.VariableSelectorNode" Collapsed="true">
+    <Position X="58.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACAAQABAAAAAAAAAAACAAAAAAgAAAAABA=</HashCode>
+      <FileName>Models\AST\VariableSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.VariableTypeNode" Collapsed="true">
+    <Position X="76.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\VariableTypeNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.VariableTypeSelectorNode" Collapsed="true">
+    <Position X="36" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\VariableTypeSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AspectSol.Compiler.Models.AST.WildcardSelectorNode" Collapsed="true">
+    <Position X="42.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\AST\WildcardSelectorNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Enum Name="AspectSol.Compiler.Models.Enums.FunctionVisibility" Collapsed="true">
+    <Position X="79" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAEAGAAAAAAAAIAAAAEAAAA=</HashCode>
+      <FileName>Models\Enums\FunctionVisibility.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AspectSol.Compiler.Models.Enums.Interface" Collapsed="true">
+    <Position X="80.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Enums\Interface.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AspectSol.Compiler.Models.Enums.Location" Collapsed="true">
+    <Position X="82.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQABAAAAAA=</HashCode>
+      <FileName>Models\Enums\Location.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AspectSol.Compiler.Models.Enums.ModificationType" Collapsed="true">
+    <Position X="79" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAEAAAAAAAAAA=</HashCode>
+      <FileName>Models\Enums\ModificationType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AspectSol.Compiler.Models.Enums.ModifierOperator" Collapsed="true">
+    <Position X="80.75" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAAAAAAAAAAgIAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Enums\ModifierOperator.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AspectSol.Compiler.Models.Enums.Placement" Collapsed="true">
+    <Position X="82.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABABAAAAAAAA=</HashCode>
+      <FileName>Models\Enums\Placement.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AspectSol.Compiler.Models.Enums.Variable" Collapsed="true">
+    <Position X="79" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAEAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Enums\Variable.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AspectSol.Compiler.Models.Enums.VariableVisibility" Collapsed="true">
+    <Position X="80.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAEAAAAAAAAIAAAAAAAAA=</HashCode>
+      <FileName>Models\Enums\VariableVisibility.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
