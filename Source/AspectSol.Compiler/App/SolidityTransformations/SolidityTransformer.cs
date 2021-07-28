@@ -423,17 +423,67 @@ namespace AspectSol.Compiler.App.SolidityTransformations
             baseContracts.Add(@interface);
         }
 
-        public static void AddSubNode(this JToken contract, JToken function)
+        public static void AddContractSubNode(this JToken contract, JToken function)
         {
             (contract["subNodes"] as JArray).Add(function);
         }
 
-        public static void AddSubNodes(this JContainer container, List<JToken> functions)
+        public static void AddContractSubNodes(this JToken contract, List<JToken> functions)
         {
             foreach (var function in functions)
             {
-                container.AddSubNode(function);
+                contract.AddContractSubNode(function);
             }
+        }
+
+        public static void UpdateContractName(this JToken contract, string name)
+        {
+
+        }
+
+        #endregion
+
+        #region Function Manipulation
+
+        public static void AddFunctionStatement(this JToken function, JToken statement)
+        {
+
+        }
+
+        public static void AddFunctionStatements(this JToken function, List<JToken> statements)
+        {
+            foreach(var statement in statements)
+            {
+                function.AddFunctionStatement(statement);
+            }
+        }
+
+        public static void AddFunctionModifier(this JToken function, JToken modifier)
+        {
+
+        }
+
+        public static void AddFunctionModifiers(this JToken function, List<JToken> modifiers)
+        {
+            foreach (var modifier in modifiers)
+            {
+                function.AddFunctionModifier(modifier);
+            }
+        }
+
+        public static void UpdateFunctionName(this JToken funciton, string name)
+        {
+
+        }
+
+        public static void UpdateFuncitonVisibility(this JToken function, string visibility)
+        {
+
+        }
+
+        public static void UpdateFunctionStateMutability(this JToken function, string stateMutability)
+        {
+
         }
 
         #endregion
