@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using AspectSol.Compiler.Infra.Models;
+using System.Collections.Generic;
 
 namespace AspectSol.Compiler.Domain
 {
     public interface ITokenizer
     {
-        List<string> Start(string filepath);
+        List<Token> Start(string filepath);
     }
 }

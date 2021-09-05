@@ -1,0 +1,8 @@
+{
+  "name": "Javascript",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "@solidity-parser/parser": "^0.13.2"
+  }
+}

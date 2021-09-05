@@ -1,4 +1,4 @@
-﻿using AspectSol.Compiler.Models.AST;
+﻿using AspectSol.Compiler.Domain.AST;
 using System.Collections.Generic;
 
 namespace AspectSol.Compiler.Domain
