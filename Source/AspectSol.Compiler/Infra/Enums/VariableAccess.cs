@@ -1,6 +1,6 @@
 ﻿namespace AspectSol.Compiler.Infra.Enums
 {
-    public enum Variable
+    public enum VariableAccess
     {
         GET = 1,
 

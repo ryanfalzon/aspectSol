@@ -4,7 +4,7 @@ namespace AspectSol.Compiler.Domain.AST
 {
     public class TypeVariableTypeSelectorNode : VariableTypeSelectorNode
     {
-        public string Type { get; set; }
+        public string VariableType { get; set; }
 
         public override string ToString()
         {
@@ -13,7 +13,7 @@ namespace AspectSol.Compiler.Domain.AST
             stringBuilder.AppendLine($"{GetIndentation()}<TypeVariableTypeSelectorNode>");
             IncreaseIndentation();
 
-            stringBuilder.AppendLine($"{GetIndentation()}<Type>{Type}</Type>");
+            stringBuilder.AppendLine($"{GetIndentation()}<VariableType>{VariableType}</VariableType>");
 
             DecreaseIndentation();
             stringBuilder.AppendLine($"{GetIndentation()}</TypeVariableTypeSelectorNode>");

@@ -18,19 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="App\SolidityProcessors\GenerateAST.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Jering.Javascript.NodeJS" Version="6.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Infra\Exceptions\" />
-    <Folder Include="Infra\Helpers\" />
   </ItemGroup>
 
   <ItemGroup>

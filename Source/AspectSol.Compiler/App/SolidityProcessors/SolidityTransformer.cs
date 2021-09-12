@@ -20,7 +20,7 @@ namespace AspectSol.Compiler.App.SolidityProcessors
         private readonly string FUNCTIONCALL = "FunctionCall";
         private readonly string MEMBERACCESS = "MemberAccess";
         private readonly string BINARYOPERATION = "BinaryOperation";
-        private readonly string ArrayTypeName = "ArrayTypeName";
+        private readonly string ARRAYTYPENAME = "ArrayTypeName";
 
         public SolidityTransformer()
         {
@@ -263,6 +263,36 @@ namespace AspectSol.Compiler.App.SolidityProcessors
             };
         }
 
+        public SelectionResult FilterFunctionsByParameter(JContainer container, string parameterType, string parameterName)
+        {
+            if (string.IsNullOrWhiteSpace(parameterType))
+                throw new ArgumentNullException(nameof(parameterType));
+            else if (string.IsNullOrWhiteSpace(parameterName))
+                throw new ArgumentNullException(nameof(parameterName));
+
+            var children = container["children"] as JArray;
+            var selectedChildren = children.Children()
+                .Select(contract =>
+                {
+                    var subNodes = contract["subNodes"] as JArray;
+                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
+                        subNode["parameters"].Value<JArray>().ToList()
+                            .Exists(functionParameter => functionParameter["type"].Value<string>().Equals(VARIABLEDECLARATION) &&
+                                parameterType.Equals(functionParameter["typeName"]["name"].Value<string>()) && parameterName.Equals(functionParameter["identifier"]["name"].Value<string>()))));
+
+                    return contract;
+                })
+                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
+                .ToList();
+
+            selectedChildren.ForEach(child => children.Remove(child));
+
+            return new SelectionResult
+            {
+                Container = container
+            };
+        }
+
         public SelectionResult FilterFunctionsByReturnParameters(JContainer container, List<(string Type, string Value)> returnParameters)
         {
             if (returnParameters.Count == 0)
@@ -284,6 +314,94 @@ namespace AspectSol.Compiler.App.SolidityProcessors
                 .ToList();
 
             selectedChildren.ForEach(child => children.Remove(child));
+
+            return new SelectionResult
+            {
+                Container = container
+            };
+        }
+
+        public SelectionResult FilterFunctionsByReturnParameters(JContainer container, string returnType, string returnName)
+        {
+            if (string.IsNullOrWhiteSpace(returnType))
+                throw new ArgumentNullException(nameof(returnType));
+            else if (string.IsNullOrWhiteSpace(returnName))
+                throw new ArgumentNullException(nameof(returnName));
+
+            var children = container["children"] as JArray;
+            var selectedChildren = children.Children()
+                .Select(contract =>
+                {
+                    var subNodes = contract["subNodes"] as JArray;
+                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
+                        subNode["returnParameters"].Value<JArray>().ToList()
+                            .Exists(returnParameter => returnParameter["type"].Value<string>().Equals(VARIABLEDECLARATION) &&
+                                returnParameter["typeName"]["name"].Value<string>().Equals(returnType) && returnParameter["identifier"]["name"].Value<string>().Equals(returnName))));
+
+                    return contract;
+                })
+                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
+                .ToList();
+
+            selectedChildren.ForEach(child => children.Remove(child));
+
+            return new SelectionResult
+            {
+                Container = container
+            };
+        }
+
+        public SelectionResult FilterFunctionCallsByInstanceName(JContainer container, string instanceName, string functionName)
+        {
+            if (string.IsNullOrWhiteSpace(instanceName))
+                throw new ArgumentNullException(nameof(instanceName));
+            else if (string.IsNullOrWhiteSpace(functionName))
+                throw new ArgumentNullException(nameof(functionName));
+
+            // TODO - FilterFunctionCallsByInstanceName
+
+            return new SelectionResult
+            {
+                Container = container
+            };
+        }
+
+        #endregion
+
+        #region Variable Definition Filtering
+
+        public SelectionResult FilterVariableDefinitionByContractAddress(JContainer container, string contractAddress)
+        {
+            if (string.IsNullOrWhiteSpace(contractAddress))
+                throw new ArgumentNullException(nameof(contractAddress));
+
+            // TODO - FilterVariableDefinitionByContractAddress
+
+            return new SelectionResult
+            {
+                Container = container
+            };
+        }
+
+        public SelectionResult FilterVariableDefinitionByVariableType(JContainer container, string variableType)
+        {
+            if (string.IsNullOrWhiteSpace(variableType))
+                throw new ArgumentNullException(nameof(variableType));
+
+            // TODO - FilterVariableDefinitionByVariableName
+
+            return new SelectionResult
+            {
+                Container = container
+            };
+        }
+
+        public SelectionResult FilterVariableDefinitionByVariableName(JContainer container, string variableName)
+        {
+            if (string.IsNullOrWhiteSpace(variableName))
+                throw new ArgumentNullException(nameof(variableName));
+
+            // TODO - FilterVariableDefinitionByVariableName
 
             return new SelectionResult
             {
@@ -529,17 +647,18 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         #region Function Manipulation
 
-        public void AddFunctionStatement(JToken function, JToken statement)
+        public void AddFunctionStatement(JToken function, JToken statement, JToken before = null, JToken after = null)
         {
+            // TODO - Add before and after statements
             var functionStatements = function["body"]["statements"] as JArray;
             functionStatements.Add(statement);
         }
 
-        public void AddFunctionStatements(JToken function, List<JToken> statements)
+        public void AddFunctionStatements(JToken function, List<JToken> statements, JToken before = null, JToken after = null)
         {
             foreach (var statement in statements)
             {
-                AddFunctionStatement(function, statement);
+                AddFunctionStatement(function, statement, before, after);
             }
         }
 
@@ -611,6 +730,7 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         public JToken GenerateVariableNode(string variableType, string variableName, string variableVisibility)
         {
+            // TODO - Complete variable node generation
             return JToken.Parse(JsonConvert.SerializeObject(new
             {
                 type = VARIABLEDECLARATION,
@@ -639,6 +759,24 @@ namespace AspectSol.Compiler.App.SolidityProcessors
                 @override = (object)null,
                 storageLocation = (object)null
             }));
+        }
+
+        public JToken GenerateModifierNode(string modifierName)
+        {
+            // TODO - GenerateModifierNode
+            throw new NotImplementedException();
+        }
+
+        public JToken GenerateFunctionStatement(string statement)
+        {
+            // TODO - GenerateFunctionStatement
+            throw new NotImplementedException();
+        }
+
+        public List<JToken> GenerateFunctionStatements(List<string> statements)
+        {
+            // TODO - GenerateFunctionStatements
+            throw new NotImplementedException();
         }
 
         #endregion

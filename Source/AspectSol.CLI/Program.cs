@@ -1,12 +1,34 @@
-﻿using System;
+﻿using AspectSol.Compiler.App.SolidityProcessors;
+using Jering.Javascript.NodeJS;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.IO;
 
 namespace AspectSol.CLI
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        private static readonly int ExpectedParameterCount = 1;
+
+        public static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            if(args.Length != ExpectedParameterCount)
+            {
+                throw new ArgumentOutOfRangeException($"Invalid number of arguments passed. Excpected={ExpectedParameterCount} | Actual={args.Length}");
+            }
+
+            var solidityFilePath = args[0];
+
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddNodeJS();
+            serviceCollection.Configure<NodeJSProcessOptions>(options => options.ProjectPath = AppDomain.CurrentDomain.BaseDirectory);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+            var nodeJSService = serviceProvider.GetRequiredService<INodeJSService>();
+
+            SolidityParser solidityParser = new SolidityParser(nodeJSService);
+            var result = solidityParser.Parse(File.ReadAllText(solidityFilePath)).Result;
+
+            Console.WriteLine(result);
         }
     }
 }

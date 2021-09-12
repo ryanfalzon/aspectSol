@@ -1,5 +1,4 @@
 ﻿using AspectSol.Compiler.Domain;
-using AspectSol.Compiler.Helpers;
 using AspectSol.Compiler.Infra.Models;
 using AspectSol.Compiler.Infra.Enums;
 using System.Collections.Generic;
@@ -57,14 +56,14 @@ namespace AspectSol.Compiler.App.Processors
                 }
                 else
                 {
-                    if (remainingText.IsWhitespace())
-                    {
-                        remainingText = remainingText[1..];
-                    }
-                    else
-                    {
+                    //if (remainingText.IsWhitespace())
+                    //{
+                    //    remainingText = remainingText[1..];
+                    //}
+                    //else
+                    //{
 
-                    }
+                    //}
                 }
             }
 
