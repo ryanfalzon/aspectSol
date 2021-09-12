@@ -1,12 +1,24 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class TaggedDefinitionDecoratorNode : DefinitionDecoratorNode
     {
         public ModifierSyntaxNode ModifierSyntax { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<TaggedDefinitionDecoratorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine(ModifierSyntax.ToString());
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</TaggedDefinitionDecoratorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

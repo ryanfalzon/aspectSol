@@ -1,12 +1,24 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class NameContractSelectorNode : ContractSelectorNode
     {
         public string ContractName { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<NameContractSelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<ContractName>{ContractName}</ContractName>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</NameContractSelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

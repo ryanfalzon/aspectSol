@@ -1,14 +1,25 @@
 ﻿using AspectSol.Compiler.Infra.Enums;
+using System.Text;
 
 namespace AspectSol.Compiler.Domain.AST
 {
     public class InterfaceNode : Node
     {
-        public Interface Interface { get; set; }
+        public Interface Value { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<InterfaceNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<Value>{Value}</Value>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</InterfaceNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

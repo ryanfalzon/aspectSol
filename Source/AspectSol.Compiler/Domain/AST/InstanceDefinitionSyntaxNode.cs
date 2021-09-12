@@ -1,4 +1,6 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class InstanceDefinitionSyntaxNode : DefinitionSyntaxNode
     {
@@ -8,9 +10,21 @@
 
         public SelectorNode FunctionSelector { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<InstanceDefinitionSyntaxNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine(NameContractSelector.ToString());
+            stringBuilder.AppendLine(InstanceSelector.ToString());
+            stringBuilder.AppendLine(FunctionSelector.ToString());
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</InstanceDefinitionSyntaxNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

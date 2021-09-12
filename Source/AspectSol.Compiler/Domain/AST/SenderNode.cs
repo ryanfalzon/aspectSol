@@ -1,12 +1,24 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class SenderNode : Node
     {
         public ReferenceDefinitionSyntaxNode ReferenceDefinition { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<SenderNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine(ReferenceDefinition.ToString());
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</SenderNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

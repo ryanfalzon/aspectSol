@@ -1,4 +1,5 @@
 ﻿using AspectSol.Compiler.Infra.Enums;
+using System.Text;
 
 namespace AspectSol.Compiler.Domain.AST
 {
@@ -6,9 +7,19 @@ namespace AspectSol.Compiler.Domain.AST
     {
         public Placement Value { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<PlacementNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<Value>{Value}</Value>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</PlacementNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

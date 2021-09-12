@@ -1,12 +1,24 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class NamePropertySelectorNode : PropertySelectorNode
     {
         public string PropertyName { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<NamePropertySelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<PropertyName>{PropertyName}</PropertyName>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</NamePropertySelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

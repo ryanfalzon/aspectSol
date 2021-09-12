@@ -1,4 +1,6 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class InterfaceContractSelectorNode : ContractSelectorNode
     {
@@ -6,9 +8,20 @@
 
         public string InterfaceName { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<InterfaceContractSelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<ContractName>{ContractName}</ContractName>");
+            stringBuilder.AppendLine($"{GetIndentation()}<InterfaceName>{InterfaceName}</InterfaceName>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</InterfaceContractSelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

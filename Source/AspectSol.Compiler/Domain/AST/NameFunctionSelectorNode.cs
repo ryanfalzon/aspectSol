@@ -1,12 +1,24 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class NameFunctionSelectorNode : FunctionSelectorNode
     {
         public string FunctionName { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<NameFunctionSelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<FunctionName>{FunctionName}</FunctionName>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</NameFunctionSelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

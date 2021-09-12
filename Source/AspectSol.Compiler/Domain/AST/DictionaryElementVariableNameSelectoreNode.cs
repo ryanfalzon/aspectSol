@@ -1,4 +1,6 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class DictionaryElementVariableNameSelectoreNode : VariableNameSelectorNode
     {
@@ -6,9 +8,20 @@
 
         public SelectorNode KeySelector { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<DictionaryElementVariableNameSelectoreNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<VariableName>{VariableName}</VariableName>");
+            stringBuilder.AppendLine(KeySelector.ToString());
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</DictionaryElementVariableNameSelectoreNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

@@ -1,12 +1,24 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class NameVariableNameSelectorNode : VariableNameSelectorNode
     {
         public string VariableName { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<NameVariableNameSelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<VariableName>{VariableName}</VariableName>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</NameVariableNameSelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

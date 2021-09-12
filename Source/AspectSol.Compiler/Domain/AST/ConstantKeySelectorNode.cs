@@ -1,12 +1,24 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class ConstantKeySelectorNode : KeySelectorNode
     {
         public string Constant { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<ConstantKeySelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<Constant>{Constant}</Constant>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</ConstantKeySelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

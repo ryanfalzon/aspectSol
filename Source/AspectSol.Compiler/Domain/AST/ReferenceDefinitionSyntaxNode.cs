@@ -1,4 +1,6 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class ReferenceDefinitionSyntaxNode : DefinitionSyntaxNode
     {
@@ -6,9 +8,20 @@
 
         public SelectorNode FunctionSelector { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<ReferenceDefinitionSyntaxNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine(ContractSelector.ToString());
+            stringBuilder.AppendLine(FunctionSelector.ToString());
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</ReferenceDefinitionSyntaxNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

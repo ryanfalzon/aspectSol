@@ -1,4 +1,6 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class ParameterNode : Node
     {
@@ -6,9 +8,20 @@
 
         public string Name { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<ParameterNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<Type>{Type}</Type>");
+            stringBuilder.AppendLine($"{GetIndentation()}<Name>{Name}</Name>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</ParameterNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

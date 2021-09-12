@@ -1,6 +1,6 @@
 ﻿namespace AspectSol.Compiler.Domain.AST
 {
-    public abstract class FunctionSelectorNode : Node
+    public abstract class FunctionSelectorNode : SelectorNode
     {
     }
 }

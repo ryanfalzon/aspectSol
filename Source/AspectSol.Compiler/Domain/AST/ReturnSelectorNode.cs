@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 
 namespace AspectSol.Compiler.Domain.AST
 {
@@ -6,9 +7,19 @@ namespace AspectSol.Compiler.Domain.AST
     {
         public List<ReturnTypeNode> ReturnTypes { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<ReturnSelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine(string.Join('n', ReturnTypes));
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</ReturnSelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

@@ -1,9 +1,11 @@
-﻿namespace AspectSol.Compiler.Domain.AST
+﻿using System.Text;
+
+namespace AspectSol.Compiler.Domain.AST
 {
     public class VariableSelectorNode : SelectorNode
     {
-        public VariableNode VariableSyntax { get; set; }
-
+        public VariableSyntaxNode VariableSyntaxNode { get; set; }
+        
         public SelectorNode VariableType { get; set; }
 
         public SelectorNode VariableLocation { get; set; }
@@ -12,9 +14,23 @@
 
         public VariableDecoratorNode VariableDecorator { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<VariableSelectorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine(VariableSyntaxNode.ToString());
+            stringBuilder.AppendLine(VariableType.ToString());
+            stringBuilder.AppendLine(VariableLocation.ToString());
+            stringBuilder.AppendLine(VariableNameSelector.ToString());
+            stringBuilder.AppendLine(VariableDecorator.ToString());
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</VariableSelectorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

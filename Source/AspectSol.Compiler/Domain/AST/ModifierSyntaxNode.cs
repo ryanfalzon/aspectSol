@@ -1,4 +1,5 @@
 ﻿using AspectSol.Compiler.Infra.Enums;
+using System.Text;
 
 namespace AspectSol.Compiler.Domain.AST
 {
@@ -10,9 +11,21 @@ namespace AspectSol.Compiler.Domain.AST
 
         public ModifierNode Right { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<ModifierSyntaxNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<Operator>{Operator}</Operator>");
+            stringBuilder.AppendLine(Left.ToString());
+            stringBuilder.AppendLine(Right.ToString());
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</ModifierSyntaxNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }

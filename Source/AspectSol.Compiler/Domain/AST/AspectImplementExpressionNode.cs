@@ -2,21 +2,21 @@
 
 namespace AspectSol.Compiler.Domain.AST
 {
-    public class NameInterfaceSelectorNode : InterfaceSelectorNode
+    public class AspectImplementExpressionNode : AspectExpressionNode
     {
         public string InterfaceName { get; set; }
 
         public override string ToString()
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder stringBuilder= new StringBuilder();
 
-            stringBuilder.AppendLine($"{GetIndentation()}<NameInterfaceSelectorNode>");
+            stringBuilder.AppendLine($"{GetIndentation()}<AspectImplementExpressionNode>");
             IncreaseIndentation();
 
             stringBuilder.AppendLine($"{GetIndentation()}<InterfaceName>{InterfaceName}</InterfaceName>");
 
             DecreaseIndentation();
-            stringBuilder.AppendLine($"{GetIndentation()}</NameInterfaceSelectorNode>");
+            stringBuilder.AppendLine($"{GetIndentation()}</AspectImplementExpressionNode>");
 
             return stringBuilder.ToString();
         }

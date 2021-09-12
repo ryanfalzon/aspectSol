@@ -1,4 +1,5 @@
 ﻿using AspectSol.Compiler.Infra.Enums;
+using System.Text;
 
 namespace AspectSol.Compiler.Domain.AST
 {
@@ -6,9 +7,19 @@ namespace AspectSol.Compiler.Domain.AST
     {
         public VariableVisibility VariableVisibility { get; set; }
 
-        public override void Visit()
+        public override string ToString()
         {
-            throw new System.NotImplementedException();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<VariableDecoratorNode>");
+            IncreaseIndentation();
+
+            stringBuilder.AppendLine($"{GetIndentation()}<VariableVisibility>{VariableVisibility}</VariableVisibility>");
+
+            DecreaseIndentation();
+            stringBuilder.AppendLine($"{GetIndentation()}</VariableDecoratorNode>");
+
+            return stringBuilder.ToString();
         }
     }
 }
