@@ -1,4 +1,5 @@
 ﻿using AspectSol.Compiler.Domain;
+using AspectSol.Compiler.Infra.Extensions;
 using AspectSol.Compiler.Infra.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,17 +11,21 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 {
     public class SolidityTransformer : IContractTransformer
     {
-        private readonly string WILDCARD = "*";
-        private readonly string CONTRACTDEFINITION = "ContractDefinition";
-        private readonly string FUNCTIONDEFINITION = "FunctionDefinition";
-        private readonly string VARIABLEDECLARATION = "VariableDeclaration";
-        private readonly string MODIFIERINVOCATION = "ModifierInvocation";
-        private readonly string INHERITANCESPECIFIER = "InheritanceSpecifier";
-        private readonly string EXPRESSIONSTATEMENT = "ExpressionStatement";
-        private readonly string FUNCTIONCALL = "FunctionCall";
-        private readonly string MEMBERACCESS = "MemberAccess";
-        private readonly string BINARYOPERATION = "BinaryOperation";
-        private readonly string ARRAYTYPENAME = "ArrayTypeName";
+        private const string WILDCARD = "*";
+        private const string CONTRACTDEFINITION = "ContractDefinition";
+        private const string FUNCTIONDEFINITION = "FunctionDefinition";
+        private const string VARIABLEDECLARATION = "VariableDeclaration";
+        private const string STATEVARIABLEDECLARATION = "StateVariableDeclaration";
+        private const string MODIFIERINVOCATION = "ModifierInvocation";
+        private const string INHERITANCESPECIFIER = "InheritanceSpecifier";
+        private const string EXPRESSIONSTATEMENT = "ExpressionStatement";
+        private const string RETURNSTATEMENT = "ReturnStatement";
+        private const string VARIABLEDECLARATIONSTATEMENT = "VariableDeclarationStatement";
+        private const string FUNCTIONCALL = "FunctionCall";
+        private const string MEMBERACCESS = "MemberAccess";
+        private const string BINARYOPERATION = "BinaryOperation";
+        private const string IFSTATEMENT = "IfStatement";
+        private const string ARRAYTYPENAME = "ArrayTypeName";
 
         public SolidityTransformer()
         {
@@ -28,43 +33,69 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         #region Contract Filtering
 
-        public SelectionResult FilterContractsByContractName(JContainer container, string contractName)
+        /// <summary>
+        /// Filter contracts found in jToken by their name
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="contractName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterContractsByContractName(JToken jToken, string contractName)
         {
             if (string.IsNullOrWhiteSpace(contractName))
                 throw new ArgumentNullException(nameof(contractName));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Where(child => child["type"].Value<string>().Equals(CONTRACTDEFINITION) &&
-                    (contractName.Equals(WILDCARD) || child["name"].Value<string>().Equals(contractName)))
-                .ToList();
+            var interestedContracts = new List<string>();
 
-            selectedChildren.ForEach(child => children.Remove(child));
-            container["children"] = new JArray(selectedChildren);
+            var children = jToken["children"] as JArray;
+            foreach(var child in children.Children())
+            {
+                if(child["type"].Matches(CONTRACTDEFINITION) && child["kind"].Matches("contract") && (contractName.Equals(WILDCARD) || child["name"].Matches(contractName)))
+                {
+                    interestedContracts.Add(child["name"].Value<string>());
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedContracts = interestedContracts
             };
         }
 
-        public SelectionResult FilterContractsByInterfaceName(JContainer container, string interfaceName)
+        /// <summary>
+        /// Filter contracts found in jToken by the implemented interface
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="interfaceName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterContractsByInterfaceName(JToken jToken, string interfaceName)
         {
             if (string.IsNullOrWhiteSpace(interfaceName))
                 throw new ArgumentNullException(nameof(interfaceName));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Where(child => interfaceName.Equals("*") ||
-                    (!string.IsNullOrWhiteSpace(child["baseContracts"].Value<string>()) &&
-                    child["baseContracts"].Value<JArray>().ToList().Exists(baseContract => baseContract["baseName"].Value<JObject>()["namePath"].Value<string>().Equals(interfaceName))))
-                .ToList();
+            var interestedContracts = new List<string>();
 
-            selectedChildren.ForEach(child => children.Remove(child));
+            var children = jToken["children"] as JArray;
+            foreach(var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION) && child["kind"].Matches("contract"))
+                {
+                    var baseContracts = child["baseContracts"].ToSafeList();
+
+                    foreach(var baseContract in baseContracts)
+                    {
+                        if (interfaceName.Equals(WILDCARD) || baseContract["baseName"].Value<JObject>()["namePath"].Matches(interfaceName))
+                        {
+                            interestedContracts.Add(child["name"].Value<string>());
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedContracts = interestedContracts
             };
         }
 
@@ -72,297 +103,549 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         #region Function Filtering
 
-        public SelectionResult FilterFunctionsByFunctionName(JContainer container, string functionName)
+        /// <summary>
+        /// Filter functions found in jToken by their name
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="functionName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionsByFunctionName(JToken jToken, string functionName)
         {
             if (string.IsNullOrWhiteSpace(functionName))
                 throw new ArgumentNullException(nameof(functionName));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        (functionName.Equals(WILDCARD) || subNode["name"].Value<string>().Equals(functionName))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
-
-            selectedChildren.ForEach(child => children.Remove(child));
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse() && (functionName.Equals(WILDCARD) || subNode["name"].Matches(functionName)))
+                        {
+                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByVisibility(JContainer container, string visibility)
+        /// <summary>
+        /// Filter functions found in jToken by their visibility
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="visibility"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionsByVisibility(JToken jToken, string visibility)
         {
             if (string.IsNullOrWhiteSpace(visibility))
                 throw new ArgumentNullException(nameof(visibility));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        (visibility.Equals(WILDCARD) || subNode["visibility"].Value<string>().Equals(visibility))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
-
-            selectedChildren.ForEach(child => children.Remove(child));
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse() && (visibility.Equals(WILDCARD) || subNode["visibility"].Matches(visibility)))
+                        {
+                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByStateMutability(JContainer container, string stateMutability)
+        /// <summary>
+        /// Filter functions found in jToken by their state mutability
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="stateMutability"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionsByStateMutability(JToken jToken, string stateMutability)
         {
             if (string.IsNullOrWhiteSpace(stateMutability))
                 throw new ArgumentNullException(nameof(stateMutability));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        (stateMutability.Equals(WILDCARD) || subNode["stateMutability"].Value<string>().Equals(stateMutability))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
-
-            selectedChildren.ForEach(child => children.Remove(child));
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse() && (stateMutability.Equals(WILDCARD) || subNode["stateMutability"].Matches(stateMutability)))
+                        {
+                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByAllModifiers(JContainer container, List<string> modifiers)
+        /// <summary>
+        /// Filter functions found in jToken by their modifier
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="modifiers"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public SelectionResult FilterFunctionsByAllModifiers(JToken jToken, List<string> modifiers)
         {
-            if (modifiers.Count == 0)
-                throw new ArgumentOutOfRangeException(nameof(modifiers));
+            if (modifiers == null || modifiers.Count == 0)
+                throw new ArgumentNullException(nameof(modifiers));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        subNode["modifiers"].Value<JArray>().ToList()
-                            .Where(modifierInvocations => modifierInvocations["type"].Value<string>().Equals(MODIFIERINVOCATION) &&
-                                modifiers.Exists(modifier => modifier.Equals(modifierInvocations["name"].Value<string>())))
-                            .Count() == 2));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var functionModifiers = subNode["modifiers"].ToSafeList();
 
-            selectedChildren.ForEach(child => children.Remove(child));
+                            bool allMatch = true;
+                            foreach(var modifier in modifiers)
+                            {
+                                allMatch = functionModifiers.Exists(functionModifier => functionModifier["name"].Matches(modifier));
+
+                                if (!allMatch)
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (allMatch)
+                            {
+                                interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByEitherModifiers(JContainer container, List<string> modifiers)
+        /// <summary>
+        /// Filter functions found in jToken by their modifier
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="modifiers"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionsByEitherModifiers(JToken jToken, List<string> modifiers)
         {
-            if (modifiers.Count == 0)
-                throw new ArgumentOutOfRangeException(nameof(modifiers));
+            if (modifiers == null || modifiers.Count == 0)
+                throw new ArgumentNullException(nameof(modifiers));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        subNode["modifiers"].Value<JArray>().ToList()
-                            .Exists(modifierInvocations => modifierInvocations["type"].Value<string>().Equals(MODIFIERINVOCATION) &&
-                                modifiers.Exists(modifier => modifier.Equals(modifierInvocations["name"].Value<string>())))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var functionModifiers = subNode["modifiers"].ToSafeList();
 
-            selectedChildren.ForEach(child => children.Remove(child));
+                            bool foundMatch = false;
+                            foreach (var modifier in modifiers)
+                            {
+                                foundMatch = functionModifiers.Exists(functionModifier => functionModifier["name"].Matches(modifier));
+
+                                if (foundMatch)
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (foundMatch)
+                            {
+                                interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByModifier(JContainer container, string modifier, bool invert)
+        /// <summary>
+        /// Filter functions found in jToken by their modifier
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="modifier"></param>
+        /// <param name="invert"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionsByModifier(JToken jToken, string modifier, bool invert)
         {
             if (string.IsNullOrWhiteSpace(modifier))
                 throw new ArgumentNullException(nameof(modifier));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        subNode["modifiers"].Value<JArray>().ToList()
-                            .Exists(modifierInvocations => modifierInvocations["type"].Value<string>().Equals(MODIFIERINVOCATION) &&
-                                (invert ^ modifier.Equals(modifierInvocations["name"].Value<string>())))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var functionModifiers = subNode["modifiers"].ToSafeList();
 
-            selectedChildren.ForEach(child => children.Remove(child));
+                            bool foundMatch = false;
+                            if (functionModifiers.Count == 0 && invert)
+                            {
+                                foundMatch = true;
+                            }
+                            else
+                            {
+                                foreach (var functionModifier in functionModifiers)
+                                {
+                                    foundMatch = invert ^ functionModifier["name"].Matches(modifier);
+
+                                    if (foundMatch)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (foundMatch)
+                            {
+                                interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByParameters(JContainer container, List<(string Type, string Value)> parameters)
-        {
-            if (parameters.Count == 0)
-                throw new ArgumentOutOfRangeException(nameof(parameters));
-
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
-                {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        subNode["parameters"].Value<JArray>().ToList()
-                            .Exists(functionParameter => functionParameter["type"].Value<string>().Equals(VARIABLEDECLARATION) &&
-                                parameters.Exists(parameter => parameter.Type.Equals(functionParameter["typeName"]["name"].Value<string>()) && parameter.Value.Equals(functionParameter["identifier"]["name"].Value<string>())))));
-
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
-
-            selectedChildren.ForEach(child => children.Remove(child));
-
-            return new SelectionResult
-            {
-                Container = container
-            };
-        }
-
-        public SelectionResult FilterFunctionsByParameter(JContainer container, string parameterType, string parameterName)
+        /// <summary>
+        /// Filter functions found in jToken by the parameters they accept
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="parameterType"></param>
+        /// <param name="parameterName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionsByParameters(JToken jToken, string parameterType, string parameterName)
         {
             if (string.IsNullOrWhiteSpace(parameterType))
                 throw new ArgumentNullException(nameof(parameterType));
             else if (string.IsNullOrWhiteSpace(parameterName))
                 throw new ArgumentNullException(nameof(parameterName));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        subNode["parameters"].Value<JArray>().ToList()
-                            .Exists(functionParameter => functionParameter["type"].Value<string>().Equals(VARIABLEDECLARATION) &&
-                                parameterType.Equals(functionParameter["typeName"]["name"].Value<string>()) && parameterName.Equals(functionParameter["identifier"]["name"].Value<string>()))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var functionParameters = subNode["parameters"].ToSafeList();
 
-            selectedChildren.ForEach(child => children.Remove(child));
+                            bool isMatch = false;
+                            foreach(var functionParameter in functionParameters)
+                            {
+                                if(functionParameter["type"].Matches(VARIABLEDECLARATION) && 
+                                    functionParameter["typeName"]["name"].Matches(parameterType) && functionParameter["identifier"]["name"].Matches(parameterName))
+                                {
+                                    isMatch = true;
+                                }
+                            }
+
+                            if (isMatch)
+                            {
+                                interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByReturnParameters(JContainer container, List<(string Type, string Value)> returnParameters)
+        /// <summary>
+        /// Filter functions found in jToken by the parameters they accept
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public SelectionResult FilterFunctionsByParameters(JToken jToken, List<(string Type, string Value)> parameters)
         {
-            if (returnParameters.Count == 0)
-                throw new ArgumentOutOfRangeException(nameof(returnParameters));
+            if (parameters == null || parameters.Count == 0)
+                throw new ArgumentNullException(nameof(parameters));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        subNode["returnParameters"].Value<JArray>().ToList()
-                            .Exists(returnParameter => returnParameter["type"].Value<string>().Equals(VARIABLEDECLARATION) &&
-                                returnParameters.Exists(parameter => parameter.Type.Equals(returnParameter["typeName"]["name"].Value<string>()) && parameter.Value.Equals(returnParameter["identifier"]["name"].Value<string>())))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var functionParameters = subNode["parameters"].ToSafeList();
 
-            selectedChildren.ForEach(child => children.Remove(child));
+                            bool isMatch = functionParameters.Count > 0;
+                            foreach (var functionParameter in functionParameters)
+                            {
+                                if (functionParameter["type"].Matches(VARIABLEDECLARATION))
+                                {
+                                    isMatch = parameters.Exists(parameter =>
+                                        functionParameter["typeName"]["name"].Matches(parameter.Type) && functionParameter["identifier"]["name"].Matches(parameter.Value));
+
+                                    if (!isMatch)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (isMatch)
+                            {
+                                interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionsByReturnParameters(JContainer container, string returnType, string returnName)
+        /// <summary>
+        /// Filter functions found in JToken by the parameters the return
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="returnParameter"></param>
+        /// <param name="returnName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionsByReturnParameters(JToken jToken, string returnParameter)
         {
-            if (string.IsNullOrWhiteSpace(returnType))
-                throw new ArgumentNullException(nameof(returnType));
-            else if (string.IsNullOrWhiteSpace(returnName))
-                throw new ArgumentNullException(nameof(returnName));
+            if (string.IsNullOrWhiteSpace(returnParameter))
+                throw new ArgumentNullException(nameof(returnParameter));
 
-            var children = container["children"] as JArray;
-            var selectedChildren = children.Children()
-                .Select(contract =>
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
                 {
-                    var subNodes = contract["subNodes"] as JArray;
-                    subNodes = new JArray(subNodes.ToList().Where(subNode => subNode["type"].Value<string>().Equals(FUNCTIONDEFINITION) &&
-                        subNode["returnParameters"].Value<JArray>().ToList()
-                            .Exists(returnParameter => returnParameter["type"].Value<string>().Equals(VARIABLEDECLARATION) &&
-                                returnParameter["typeName"]["name"].Value<string>().Equals(returnType) && returnParameter["identifier"]["name"].Value<string>().Equals(returnName))));
+                    var subNodes = child["subNodes"].ToSafeList();
 
-                    return contract;
-                })
-                .Where(contract => (contract["subNodes"] as JArray).Count > 0)
-                .ToList();
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var functionReturnParameters = subNode["returnParameters"].ToSafeList();
 
-            selectedChildren.ForEach(child => children.Remove(child));
+                            bool isMatch = false;
+                            foreach (var functionReturnParameter in functionReturnParameters)
+                            {
+                                if (functionReturnParameter["type"].Matches(VARIABLEDECLARATION) && functionReturnParameter["typeName"]["name"].Matches(returnParameter))
+                                {
+                                    isMatch = true;
+                                }
+                            }
+
+                            if (isMatch)
+                            {
+                                interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedFunctions = interestedFunctions
             };
         }
 
-        public SelectionResult FilterFunctionCallsByInstanceName(JContainer container, string instanceName, string functionName)
+        /// <summary>
+        /// Filter functions found in JToken by the parameters the return
+        /// </summary>
+        /// <param name="jToken"></param>
+        /// <param name="returnParameters"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public SelectionResult FilterFunctionsByReturnParameters(JToken jToken, List<string> returnParameters)
+        {
+            if (returnParameters == null || returnParameters.Count == 0)
+                throw new ArgumentNullException(nameof(returnParameters));
+
+            var interestedFunctions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
+                {
+                    var subNodes = child["subNodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var functionReturnParameters = subNode["returnParameters"].ToSafeList();
+
+                            var functionReturnParametersList = new List<string>();
+                            foreach (var functionReturnParameter in functionReturnParameters)
+                            {
+                                if (functionReturnParameter["type"].Matches(VARIABLEDECLARATION))
+                                {
+                                    functionReturnParametersList.Add(functionReturnParameter["typeName"]["name"].Value<string>());
+                                }
+                            }
+
+                            if (returnParameters.SequenceEqual(functionReturnParametersList))
+                            {
+                                interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            }
+                        }
+                    }
+                }
+            }
+
+            return new SelectionResult
+            {
+                InterestedFunctions = interestedFunctions
+            };
+        }
+
+        /// <summary>
+        /// Filter function statements that call a function found in an instanced contract
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="instanceName"></param>
+        /// <param name="functionName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterFunctionCallsByInstanceName(JToken jToken, string instanceName, string functionName)
         {
             if (string.IsNullOrWhiteSpace(instanceName))
                 throw new ArgumentNullException(nameof(instanceName));
             else if (string.IsNullOrWhiteSpace(functionName))
                 throw new ArgumentNullException(nameof(functionName));
 
-            // TODO - FilterFunctionCallsByInstanceName
+            var interestedStatements = new Dictionary<int, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
+                {
+                    var subNodes = child["subNodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var statements = subNode["body"]["statements"].ToSafeList();
+
+                            var statementPosition = 0;
+                            foreach (var statement in statements)
+                            {
+                                if (statement["type"].Matches(EXPRESSIONSTATEMENT) && statement["expression"]["type"].Matches(FUNCTIONCALL)
+                                    && statement["expression"]["expression"]["expression"]["name"].Matches(instanceName) 
+                                    && statement["expression"]["expression"]["memberName"].Matches(functionName))
+                                {
+                                    interestedStatements.Add(statementPosition, subNode["name"].Value<string>());
+                                }
+
+                                statementPosition++;
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedStatements = interestedStatements
             };
         }
 
@@ -370,42 +653,91 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         #region Variable Definition Filtering
 
-        public SelectionResult FilterVariableDefinitionByContractAddress(JContainer container, string contractAddress)
-        {
-            if (string.IsNullOrWhiteSpace(contractAddress))
-                throw new ArgumentNullException(nameof(contractAddress));
-
-            // TODO - FilterVariableDefinitionByContractAddress
-
-            return new SelectionResult
-            {
-                Container = container
-            };
-        }
-
-        public SelectionResult FilterVariableDefinitionByVariableType(JContainer container, string variableType)
+        /// <summary>
+        /// Filter variable definitions found in jToken by their type
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="variableType"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterVariableDefinitionByVariableType(JToken jToken, string variableType)
         {
             if (string.IsNullOrWhiteSpace(variableType))
                 throw new ArgumentNullException(nameof(variableType));
 
-            // TODO - FilterVariableDefinitionByVariableName
+            var interestedDefinitions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
+                {
+                    var subNodes = child["subNodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(STATEVARIABLEDECLARATION))
+                        {
+                            var variables = subNode["variables"].ToSafeList();
+                            foreach(var variable in variables)
+                            {
+                                if(variable["type"].Matches(VARIABLEDECLARATION) && (variableType.Equals(WILDCARD) || variable["typeName"]["name"].Matches(variableType)))
+                                {
+                                    interestedDefinitions.Add(variable["name"].Value<string>(), child["name"].Value<string>());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedDefinitions = interestedDefinitions
             };
         }
 
-        public SelectionResult FilterVariableDefinitionByVariableName(JContainer container, string variableName)
+        /// <summary>
+        /// Filter variable definitions found in jToken by their name
+        /// </summary>
+        /// <param name="container"></param>
+        /// <param name="variableName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public SelectionResult FilterVariableDefinitionByVariableName(JToken jToken, string variableName)
         {
             if (string.IsNullOrWhiteSpace(variableName))
                 throw new ArgumentNullException(nameof(variableName));
 
-            // TODO - FilterVariableDefinitionByVariableName
+            var interestedDefinitions = new Dictionary<string, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
+                {
+                    var subNodes = child["subNodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(STATEVARIABLEDECLARATION))
+                        {
+                            var variables = subNode["variables"].ToSafeList();
+                            foreach (var variable in variables)
+                            {
+                                if (variable["type"].Matches(VARIABLEDECLARATION) && (variableName.Equals(WILDCARD) || variable["name"].Matches(variableName)))
+                                {
+                                    interestedDefinitions.Add(variable["name"].Value<string>(), child["name"].Value<string>());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedDefinitions = interestedDefinitions
             };
         }
 
@@ -413,16 +745,71 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         #region Variable Getters Filtering
 
-        public SelectionResult FilterVariableGettersByVariableType(JContainer container, string variableName)
+        public SelectionResult FilterVariableGettersByVariableType(JToken jToken, string variableName)
         {
             if (string.IsNullOrWhiteSpace(variableName))
                 throw new ArgumentNullException(nameof(variableName));
 
-            // TODO - FilterVariableGettersByVariableType
+            var interestedStatements = new Dictionary<int, string>();
+
+            var children = jToken["children"] as JArray;
+            foreach (var child in children.Children())
+            {
+                if (child["type"].Matches(CONTRACTDEFINITION))
+                {
+                    var subNodes = child["subNodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["type"].Matches(FUNCTIONDEFINITION) && subNode["isConstructor"].IsFalse())
+                        {
+                            var statements = subNode["body"]["statements"].ToSafeList();
+
+                            var statementPosition = 0;
+                            foreach (var statement in statements)
+                            {
+                                if (statement["type"].Matches(RETURNSTATEMENT) && statement["expression"]["name"].Matches(variableName))
+                                {
+                                    interestedStatements.Add(statementPosition, subNode["name"].Value<string>());
+                                }
+                                else if(statement["type"].Matches(VARIABLEDECLARATIONSTATEMENT) && statement["initialValue"]["type"].Matches(BINARYOPERATION)
+                                    && (statement["initialValue"]["left"]["name"].Matches(variableName) || statement["initialValue"]["right"]["name"].Matches(variableName)))
+                                {
+                                    interestedStatements.Add(statementPosition, subNode["name"].Value<string>());
+                                }
+                                else if(statement["type"].Matches(VARIABLEDECLARATIONSTATEMENT) && statement["initialValue"]["name"].Matches(variableName))
+                                {
+                                    interestedStatements.Add(statementPosition, subNode["name"].Value<string>());
+                                }
+                                else if(statement["type"].Matches(IFSTATEMENT) && statement["condition"]["type"].Matches(BINARYOPERATION)
+                                    && (statement["condition"]["left"]["name"].Matches(variableName) || statement["condition"]["right"]["name"].Matches(variableName)))
+                                {
+                                    interestedStatements.Add(statementPosition, subNode["name"].Value<string>());
+                                }
+                                else if(statement["type"].Matches(EXPRESSIONSTATEMENT) && statement["expression"]["type"].Matches(FUNCTIONCALL))
+                                {
+                                    var arguments = statement["expression"]["arguments"].ToSafeList();
+                                    foreach(var argument in arguments)
+                                    {
+                                        if(argument["type"].Matches(BINARYOPERATION) && (statement["initialValue"]["left"]["name"].Matches(variableName)
+                                            || statement["initialValue"]["right"]["name"].Matches(variableName)))
+                                        {
+                                            interestedStatements.Add(statementPosition, subNode["name"].Value<string>());
+                                        }
+                                    }
+                                    interestedStatements.Add(statementPosition, subNode["name"].Value<string>());
+                                }
+
+                                statementPosition++;
+                            }
+                        }
+                    }
+                }
+            }
 
             return new SelectionResult
             {
-                Container = container
+                InterestedStatements = interestedStatements
             };
         }
 
@@ -602,16 +989,33 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         #region Source Manipulation
 
-        public void AddContract(JContainer container, JToken contract)
+        /// <summary>
+        /// Add new contract token to source
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="newContract"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddContract(ref JToken source, JToken newContract)
         {
-            (container["children"] as JArray).Add(contract);
+            if(newContract == null)
+                throw new ArgumentNullException(nameof(newContract));
+
+            (source["children"] as JArray).Add(newContract);
         }
 
-        public void AddContracts(JContainer container, List<JToken> contracts)
+        /// <summary>
+        /// Add new contract tokens to source
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="newContracts"></param>
+        public void AddContracts(ref JToken source, List<JToken> newContracts)
         {
-            foreach (var contract in contracts)
+            if (newContracts == null || newContracts.Count == 0)
+                throw new ArgumentNullException(nameof(newContracts));
+
+            foreach (var contract in newContracts)
             {
-                AddContracts(container, contracts);
+                AddContract(ref source, contract);
             }
         }
 
@@ -619,28 +1023,76 @@ namespace AspectSol.Compiler.App.SolidityProcessors
 
         #region Contract Manipulation
 
-        public void AddContractInterface(JToken contract, JToken @interface)
+        /// <summary>
+        /// Add new interface implementation to interested contracts
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="interestedContracts"></param>
+        /// <param name="newContractInterface"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddContractInterface(ref JToken source, List<string> interestedContracts, JToken newContractInterface)
         {
-            var baseContracts = contract["baseContracts"] as JArray;
-            baseContracts.Add(@interface);
+            
+            if (interestedContracts == null || interestedContracts.Count == 0)
+                throw new ArgumentNullException(nameof(interestedContracts));
+            else if (newContractInterface == null)
+                throw new ArgumentNullException(nameof(newContractInterface));
+
+            // TODO - AddContractInterface
         }
 
-        public void AddContractSubNode(JToken contract, JToken subNode)
+        /// <summary>
+        /// Add new sub node to interested contract
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="interestedContracts"></param>
+        /// <param name="newSubNode"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddContractSubNode(ref JToken source, List<string> interestedContracts, JToken newSubNode)
         {
-            (contract["subNodes"] as JArray).Add(subNode);
+            if (interestedContracts == null || interestedContracts.Count == 0)
+                throw new ArgumentNullException(nameof(interestedContracts));
+            else if (newSubNode == null)
+                throw new ArgumentNullException(nameof(newSubNode));
+
+            // TODO - AddContractSubNode
         }
 
-        public void AddContractSubNodes(JToken contract, List<JToken> subNodes)
+        /// <summary>
+        /// Add new sub nodes to interested contracts
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="interestedContracts"></param>
+        /// <param name="newSubNodes"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddContractSubNodes(ref JToken source, List<string> interestedContracts, List<JToken> newSubNodes)
         {
-            foreach (var subNode in subNodes)
+            if (interestedContracts == null || interestedContracts.Count == 0)
+                throw new ArgumentNullException(nameof(interestedContracts));
+            else if (newSubNodes == null || newSubNodes.Count == 0)
+                throw new ArgumentNullException(nameof(newSubNodes));
+
+            foreach (var subNode in newSubNodes)
             {
-                AddContractSubNode(contract, subNode);
+                AddContractSubNode(ref source, interestedContracts, subNode);
             }
         }
 
-        public void UpdateContractName(JToken contract, string name)
+        /// <summary>
+        /// Update name of interested contracts
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="interestedContracts"></param>
+        /// <param name="newName"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void UpdateContractName(ref JToken source, List<string> interestedContracts, string newName)
         {
-            contract["name"] = name;
+            if (interestedContracts == null || interestedContracts.Count == 0)
+                throw new ArgumentNullException(nameof(interestedContracts));
+            else if (newName == null)
+                throw new ArgumentNullException(nameof(newName));
+
+            // TODO - UpdateContractName
         }
 
         #endregion
@@ -659,6 +1111,32 @@ namespace AspectSol.Compiler.App.SolidityProcessors
             foreach (var statement in statements)
             {
                 AddFunctionStatement(function, statement, before, after);
+            }
+        }
+
+        public void AddTagToFunction(JContainer container, string functionName, string contractName, string tag)
+        {
+            // TODO
+        }
+
+        public void AddTagToFunctions(JContainer container, Dictionary<string, string> interestedFunctions, string tag)
+        {
+            foreach(var interestedFunction in interestedFunctions)
+            {
+                AddTagToFunction(container, interestedFunction.Key, interestedFunction.Value, tag);
+            }
+        }
+
+        public void RemoveTagFromFunction(JContainer container, string functionName, string contractName, string tag)
+        {
+            // TODO
+        }
+
+        public void RemoveTagFromFunctions(JContainer container, Dictionary<string, string> interestedFunctions, string tag)
+        {
+            foreach (var interestedFunction in interestedFunctions)
+            {
+                RemoveTagFromFunction(container, interestedFunction.Key, interestedFunction.Value, tag);
             }
         }
 

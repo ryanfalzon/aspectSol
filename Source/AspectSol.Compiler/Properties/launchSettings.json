@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AspectSol.Compiler": {
+      "commandName": "Project",
+      "commandLineArgs": "\""
+    }
+  }
+}

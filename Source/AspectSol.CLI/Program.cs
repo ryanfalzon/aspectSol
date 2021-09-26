@@ -1,6 +1,7 @@
 ﻿using AspectSol.Compiler.App.SolidityProcessors;
 using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 
@@ -27,6 +28,9 @@ namespace AspectSol.CLI
 
             SolidityParser solidityParser = new SolidityParser(nodeJSService);
             var result = solidityParser.Parse(File.ReadAllText(solidityFilePath)).Result;
+
+            SolidityTransformer transformer = new SolidityTransformer();
+            transformer.FilterContractsByContractName(JToken.Parse(result), "Test");
 
             Console.WriteLine(result);
         }

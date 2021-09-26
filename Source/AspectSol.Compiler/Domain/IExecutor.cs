@@ -36,5 +36,12 @@ namespace AspectSol.Compiler.Domain
         SelectionResult Execute(TypeVariableTypeSelectorNode node, JContainer container);
         SelectionResult Execute(VariableDecoratorNode node, JContainer container);
         SelectionResult Execute(VariableSelectorNode node, JContainer container);
+        SelectionResult Execute(SelectorNode node, JContainer container);
+        void Execute(AspectExpressionNode node, JContainer container);
+        void Execute(AspectAddTagExpressionNode node, JContainer container);
+        void Execute(AspectGenericExpressionNode node, JContainer container);
+        void Execute(AspectImplementExpressionNode node, JContainer container);
+        void Execute(AspectRemoveTagExpressionNode node, JContainer container);
+        void Execute(AspectUpdateTagExpressionNode node, JContainer container);
     }
 }

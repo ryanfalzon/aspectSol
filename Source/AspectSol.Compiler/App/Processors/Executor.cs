@@ -12,7 +12,7 @@ using AspectSol.Compiler.Infra.Exceptions;
 
 namespace AspectSol.Compiler.App.Processors
 {
-    public class Executor : IExecutor
+    public class Executor
     {
         private readonly SolidityTransformer _transformer;
         private readonly List<LocalVariable> _locals;
@@ -69,9 +69,8 @@ namespace AspectSol.Compiler.App.Processors
         /// <param name="container"></param>
         public SelectionResult Execute(AddressContractSelectorNode node, JContainer container)
         {
-            var selection = _transformer.FilterVariableDefinitionByContractAddress(container, node.ContractAddress);
-
-            return selection;
+            // TODO
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -96,7 +95,7 @@ namespace AspectSol.Compiler.App.Processors
                     var modifierName = StringExtensions.Instance.GenerateRandomString(8);
 
                     var newModifier = _transformer.GenerateModifierNode(modifierName);
-                    _transformer.AddContractSubNode(selection.Container, newModifier);
+                    //_transformer.AddContractSubNode(selection.Container, newModifier);
 
                     var newFunctionModifier = _transformer.GenerateFunctionModifierNode(modifierName);
                     _transformer.AddFunctionModifier(selection.Container, newFunctionModifier);
@@ -405,7 +404,7 @@ namespace AspectSol.Compiler.App.Processors
         /// <returns></returns>
         public SelectionResult Execute(ParameterNode node, JContainer container)
         {
-            var selection = _transformer.FilterFunctionsByParameter(container, node.Type, node.Name);
+            var selection = _transformer.FilterFunctionsByParameters(container, node.Type, node.Name);
 
             return selection;
         }
@@ -444,7 +443,7 @@ namespace AspectSol.Compiler.App.Processors
         /// <param name="container"></param>
         public SelectionResult Execute(ReturnTypeNode node, JContainer container)
         {
-            var selection = _transformer.FilterFunctionsByReturnParameters(container, node.Type, node.Name);
+            var selection = _transformer.FilterFunctionsByReturnParameters(container, node.Type);
 
             return selection;
         }
@@ -583,7 +582,7 @@ namespace AspectSol.Compiler.App.Processors
             return selection;
         }
 
-        private SelectionResult Execute(SelectorNode node, JContainer container)
+        public SelectionResult Execute(SelectorNode node, JContainer container)
         {
             var nodeType = node.GetType();
 
@@ -628,6 +627,60 @@ namespace AspectSol.Compiler.App.Processors
                 throw new InvalidFunctionSelectorNodeException(
                     $"Invalid selector node type encountered: {node.GetType()}");
             }
+        }
+
+        public void Execute(AspectExpressionNode node, JContainer container)
+        {
+            if(node.GetType() == typeof(AspectAddTagExpressionNode))
+            {
+                Execute(node as AspectAddTagExpressionNode, container);
+            }
+            else if(node.GetType() == typeof(AspectGenericExpressionNode))
+            {
+                Execute(node as AspectGenericExpressionNode, container);
+            }
+            else if(node.GetType() == typeof(AspectImplementExpressionNode))
+            {
+                Execute(node as AspectImplementExpressionNode, container);
+            }
+            else if(node.GetType() == typeof(AspectRemoveTagExpressionNode))
+            {
+                Execute(node as AspectRemoveTagExpressionNode, container);
+            }
+            else if(node.GetType() == typeof(AspectUpdateTagExpressionNode))
+            {
+                Execute(node as AspectUpdateTagExpressionNode, container);
+            }
+            else
+            {
+                throw new InvalidStatementNodeException(
+                    $"Invalid aspect expression node type encountered: {node.GetType()}");
+            }
+        }
+
+        public void Execute(AspectAddTagExpressionNode node, JContainer container, Dictionary<string, string> interestedFunctions)
+        {
+            _transformer.AddTagToFunctions(container, interestedFunctions, node.Modifier);
+        }
+
+        public void Execute(AspectGenericExpressionNode node, JContainer container)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Execute(AspectImplementExpressionNode node, JContainer container, List<string> interestedContracts)
+        {
+            
+        }
+
+        public void Execute(AspectRemoveTagExpressionNode node, JContainer container, Dictionary<string, string> interestedFunctions)
+        {
+            _transformer.RemoveTagFromFunctions(container, interestedFunctions, node.Modifier);
+        }
+
+        public void Execute(AspectUpdateTagExpressionNode node, JContainer container)
+        {
+            throw new NotImplementedException();
         }
     }
 }
