@@ -1,0 +1,8 @@
+{
+  "name": "aspectsol-javascript-executor",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "@solidity-parser/parser": "^0.14.0"
+  }
+}
