@@ -2,8 +2,6 @@
 using AspectSol.Lib.Domain.Tokenization;
 using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Exceptions;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AspectSol.Lib.Domain.Parsing;
 

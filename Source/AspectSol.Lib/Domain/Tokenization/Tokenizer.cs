@@ -1,6 +1,5 @@
 ﻿using AspectSol.Lib.Infra.Enums;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 
 namespace AspectSol.Lib.Domain.Tokenization;
 

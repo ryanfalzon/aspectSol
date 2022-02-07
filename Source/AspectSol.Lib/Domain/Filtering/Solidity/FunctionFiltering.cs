@@ -559,4 +559,61 @@ public class FunctionFiltering : IFunctionFiltering
             InterestedStatements = interestedStatements
         };
     }
+
+    /// <summary>
+    /// Filter functions found in JToken based on whether they are an implementation of an interface function
+    /// </summary>
+    /// <param name="jToken"></param>
+    /// <param name="interfaceName"></param>
+    /// <param name="invert"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public SelectionResult FilterFunctionsImplementedFromInterface(JToken jToken, string interfaceName, bool invert)
+    {
+        if (string.IsNullOrWhiteSpace(interfaceName))
+            throw new ArgumentNullException(nameof(interfaceName));
+
+        var interestedFunctions = new Dictionary<string, string>();
+
+        var children = jToken["children"] as JArray;
+
+        var interfaceFunctions = new List<string>();
+        foreach (var child in children.Children())
+        {
+            if (child["type"].Matches(ContractDefinition) && child["kind"].Matches("interface") && child["name"].Matches(interfaceName))
+            {
+                var subNodes = child["subNodes"].ToSafeList();
+
+                foreach (var subNode in subNodes)
+                {
+                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    {
+                        interfaceFunctions.Add(subNode["name"].ToString());
+                    }
+                }
+            }
+        }
+
+        foreach (var child in children.Children())
+        {
+            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            {
+                var subNodes = child["subNodes"].ToSafeList();
+
+                foreach (var subNode in subNodes)
+                {
+                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse() &&
+                        invert ^ interfaceFunctions.Contains(subNode["name"].ToString()))
+                    {
+                        interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                    }
+                }
+            }
+        }
+
+        return new SelectionResult
+        {
+            InterestedFunctions = interestedFunctions
+        };
+    }
 }

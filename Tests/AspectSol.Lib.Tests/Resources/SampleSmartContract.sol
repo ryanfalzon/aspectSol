@@ -18,6 +18,7 @@ contract StorageA is Space {
 contract StorageB {
 
     uint256 numberB;
+    address someAddress;
     StorageA storageA;
 
     function storeAnother(uint256 num) public {

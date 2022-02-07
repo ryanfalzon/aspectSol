@@ -15,4 +15,5 @@ public interface IFunctionFiltering
     SelectionResult FilterFunctionsByReturnParameters(JToken jToken, string returnParameter);
     SelectionResult FilterFunctionsByReturnParameters(JToken jToken, List<string> returnParameters);
     SelectionResult FilterFunctionCallsByInstanceName(JToken jToken, string instanceName, string functionName);
+    SelectionResult FilterFunctionsImplementedFromInterface(JToken jToken, string interfaceName, bool invert);
 }

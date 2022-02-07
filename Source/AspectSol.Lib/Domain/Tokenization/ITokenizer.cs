@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace AspectSol.Lib.Domain.Tokenization;
+﻿namespace AspectSol.Lib.Domain.Tokenization;
 
 public interface ITokenizer
 {

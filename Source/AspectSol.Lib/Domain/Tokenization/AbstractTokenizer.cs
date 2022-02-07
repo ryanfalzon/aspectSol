@@ -1,7 +1,6 @@
 ﻿using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Exceptions;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace AspectSol.Lib.Domain.Tokenization;

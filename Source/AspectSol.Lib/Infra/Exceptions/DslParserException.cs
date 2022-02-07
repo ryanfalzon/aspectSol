@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AspectSol.Lib.Infra.Exceptions;
+﻿namespace AspectSol.Lib.Infra.Exceptions;
 
 public class DslParserException : Exception
 {
