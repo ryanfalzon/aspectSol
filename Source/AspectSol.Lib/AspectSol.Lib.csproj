@@ -6,7 +6,7 @@
 	</PropertyGroup>
 
 	<Target Name="NpmInstall" Inputs="Domain/JavascriptExecution/package.json" Outputs="Domain/JavascriptExecution/node_modules/.install-stamp">
-		<Exec Command="npm install" WorkingDirectory="Domain/JavascriptExecution/"/>
+		<Exec Command="npm install" WorkingDirectory="Domain/JavascriptExecution/" />
 		<Touch Files="Domain/JavascriptExecution/node_modules/.install-stamp" AlwaysCreate="true" />
 	</Target>
 

@@ -3,10 +3,9 @@ using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
 
-public class VariableGettersFiltering
+public class VariableGettersFiltering : VariableFiltering
 {
     private const string Wildcard = "*";
-    private const string ContractDefinition = "ContractDefinition";
     private const string FunctionDefinition = "FunctionDefinition";
     private const string ExpressionStatement = "ExpressionStatement";
     private const string ReturnStatement = "ReturnStatement";
@@ -15,19 +14,12 @@ public class VariableGettersFiltering
     private const string BinaryOperation = "BinaryOperation";
     private const string IfStatement = "IfStatement";
     private const string TupleExpression = "TupleExpression";
-    private const string IndexAccess = "IndexAccess";
     private const string Identifier = "Identifier";
     private const string MemberAccess = "MemberAccess";
-
-    private readonly Dictionary<string, string> locals;
-
-    public VariableGettersFiltering()
-    {
-        locals = new Dictionary<string, string>();
-    }
+    private const string IndexAccess = "IndexAccess";
 
     /// <summary>
-    /// 
+    /// Filter any variable access based on the name of the variable
     /// </summary>
     /// <param name="jToken"></param>
     /// <param name="variableName"></param>
@@ -38,12 +30,14 @@ public class VariableGettersFiltering
         if (string.IsNullOrWhiteSpace(variableName))
             throw new ArgumentNullException(nameof(variableName));
 
-        var interestedStatements = new Dictionary<(int, int, int), string>();
+        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
         var children = jToken["children"] as JArray;
+
+        var childPosition = 0;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition))
+            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
             {
                 var subNodes = child["subNodes"].ToSafeList();
 
@@ -52,71 +46,18 @@ public class VariableGettersFiltering
                 {
                     if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
                     {
-                        var statements = subNode["body"]["statements"].ToSafeList();
-
-                        var statementPosition = 0;
-                        foreach (var statement in statements)
+                        var statements = subNode["body"]?["statements"].ToSafeList();
+                        foreach (var (key, value) in CheckStatementsForVariableName(statements, variableName, childPosition, subNode["name"].Value<string>(), subNodePosition))
                         {
-                            if (statement["type"].Matches(ReturnStatement) && (variableName.Equals(Wildcard) || statement["expression"]["name"].Matches(variableName)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(TupleExpression))
-                            {
-                                var components = statement["expression"]["components"].ToSafeList();
-
-                                var componentPosition = 0;
-                                foreach (var component in components)
-                                {
-                                    if (variableName.Equals(Wildcard) || component["name"].Matches(variableName))
-                                    {
-                                        interestedStatements.Add((subNodePosition, statementPosition, componentPosition), subNode["name"].Value<string>());
-                                    }
-
-                                    componentPosition++;
-                                }
-                            }
-                            else if (statement["type"].Matches(VariableDeclarationStatement) && statement["initialValue"]["type"].Matches(BinaryOperation)
-                                     && (variableName.Equals(Wildcard) || statement["initialValue"]["left"]["name"].Matches(variableName)
-                                                                       || statement["initialValue"]["right"]["name"].Matches(variableName)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(VariableDeclarationStatement) && (variableName.Equals(Wildcard)
-                                         || statement["initialValue"]["name"].Matches(variableName)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(IfStatement) && statement["condition"]["type"].Matches(BinaryOperation)
-                                                                            && (variableName.Equals(Wildcard) || statement["condition"]["left"]["name"].Matches(variableName)
-                                                                                || statement["condition"]["right"]["name"].Matches(variableName)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall))
-                            {
-                                var arguments = statement["expression"]["arguments"].ToSafeList();
-
-                                var argumentPosition = 0;
-                                foreach (var argument in arguments)
-                                {
-                                    if (argument["type"].Matches(BinaryOperation) && (variableName.Equals(Wildcard) || statement["initialValue"]["left"]["name"].Matches(variableName)
-                                            || statement["initialValue"]["right"]["name"].Matches(variableName)))
-                                    {
-                                        interestedStatements.Add((subNodePosition, statementPosition, argumentPosition), subNode["name"].Value<string>());
-                                    }
-
-                                    argumentPosition++;
-                                }
-                            }
-
-                            statementPosition++;
+                            interestedStatements.Add(key, value);
                         }
                     }
 
                     subNodePosition++;
                 }
             }
+
+            childPosition++;
         }
 
         return new SelectionResult
@@ -126,7 +67,7 @@ public class VariableGettersFiltering
     }
 
     /// <summary>
-    /// 
+    /// Filter any variable access based on the type of the variable
     /// </summary>
     /// <param name="jToken"></param>
     /// <param name="variableType"></param>
@@ -137,12 +78,14 @@ public class VariableGettersFiltering
         if (string.IsNullOrWhiteSpace(variableType))
             throw new ArgumentNullException(nameof(variableType));
 
-        var interestedStatements = new Dictionary<(int, int, int), string>();
+        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
         var children = jToken["children"] as JArray;
+
+        var childPosition = 0;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition))
+            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
             {
                 var subNodes = child["subNodes"].ToSafeList();
 
@@ -151,72 +94,18 @@ public class VariableGettersFiltering
                 {
                     if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
                     {
-                        var statements = subNode["body"]["statements"].ToSafeList();
-
-                        var statementPosition = 0;
-                        foreach (var statement in statements)
+                        var statements = subNode["body"]?["statements"].ToSafeList();
+                        foreach (var (key, value) in CheckStatementsForVariableType(statements, variableType, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
                         {
-                            if (statement["type"].Matches(ReturnStatement) && (variableType.Equals(Wildcard) || IsVariableTypeMatch(statement["expression"]["name"], variableType)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(TupleExpression))
-                            {
-                                var components = statement["expression"]["components"].ToSafeList();
-
-                                var componentPosition = 0;
-                                foreach (var component in components)
-                                {
-                                    if (variableType.Equals(Wildcard) || IsVariableTypeMatch(component["name"], variableType))
-                                    {
-                                        interestedStatements.Add((subNodePosition, statementPosition, componentPosition), subNode["name"].Value<string>());
-                                    }
-
-                                    componentPosition++;
-                                }
-                            }
-                            else if (statement["type"].Matches(VariableDeclarationStatement) && statement["initialValue"]["type"].Matches(BinaryOperation)
-                                     && (variableType.Equals(Wildcard) || IsVariableTypeMatch(statement["initialValue"]["left"]["name"], variableType)
-                                                                       || IsVariableTypeMatch(statement["initialValue"]["right"]["name"], variableType)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(VariableDeclarationStatement) && (variableType.Equals(Wildcard)
-                                         || IsVariableTypeMatch(statement["initialValue"]["name"], variableType)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(IfStatement) && statement["condition"]["type"].Matches(BinaryOperation)
-                                                                            && (variableType.Equals(Wildcard) || IsVariableTypeMatch(statement["condition"]["left"]["name"], variableType)
-                                                                                || IsVariableTypeMatch(statement["condition"]["right"]["name"], variableType)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall))
-                            {
-                                var arguments = statement["expression"]["arguments"].ToSafeList();
-
-                                var argumentPosition = 0;
-                                foreach (var argument in arguments)
-                                {
-                                    if (argument["type"].Matches(BinaryOperation) && (variableType.Equals(Wildcard)
-                                            || IsVariableTypeMatch(statement["initialValue"]["left"]["name"], variableType)
-                                            || IsVariableTypeMatch(statement["initialValue"]["right"]["name"], variableType)))
-                                    {
-                                        interestedStatements.Add((subNodePosition, statementPosition, argumentPosition), subNode["name"].Value<string>());
-                                    }
-
-                                    argumentPosition++;
-                                }
-                            }
-
-                            statementPosition++;
+                            interestedStatements.Add(key, value);
                         }
                     }
 
                     subNodePosition++;
                 }
             }
+
+            childPosition++;
         }
 
         return new SelectionResult
@@ -226,23 +115,25 @@ public class VariableGettersFiltering
     }
 
     /// <summary>
-    /// 
+    /// Filter any variable access based on the visibility of the variable
     /// </summary>
     /// <param name="jToken"></param>
     /// <param name="variableVisibility"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterVariableGettersByVisibility(JToken jToken, string variableVisibility)
+    public SelectionResult FilterVariableGettersByVariableVisibility(JToken jToken, string variableVisibility)
     {
         if (string.IsNullOrWhiteSpace(variableVisibility))
             throw new ArgumentNullException(nameof(variableVisibility));
 
-        var interestedStatements = new Dictionary<(int, int, int), string>();
+        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
         var children = jToken["children"] as JArray;
+
+        var childPosition = 0;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition))
+            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
             {
                 var subNodes = child["subNodes"].ToSafeList();
 
@@ -251,73 +142,18 @@ public class VariableGettersFiltering
                 {
                     if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
                     {
-                        var statements = subNode["body"]["statements"].ToSafeList();
-
-                        var statementPosition = 0;
-                        foreach (var statement in statements)
+                        var statements = subNode["body"]?["statements"].ToSafeList();
+                        foreach (var (key, value) in CheckStatementsForVariableVisibility(statements, variableVisibility, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
                         {
-                            if (statement["type"].Matches(ReturnStatement) && (variableVisibility.Equals(Wildcard)
-                                                                               || IsVariableVisibilityMatch(statement["expression"]["name"], variableVisibility)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(TupleExpression))
-                            {
-                                var components = statement["expression"]["components"].ToSafeList();
-
-                                var componentPosition = 0;
-                                foreach (var component in components)
-                                {
-                                    if (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(component["name"], variableVisibility))
-                                    {
-                                        interestedStatements.Add((subNodePosition, statementPosition, componentPosition), subNode["name"].Value<string>());
-                                    }
-
-                                    componentPosition++;
-                                }
-                            }
-                            else if (statement["type"].Matches(VariableDeclarationStatement) && statement["initialValue"]["type"].Matches(BinaryOperation)
-                                     && (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(statement["initialValue"]["left"]["name"], variableVisibility)
-                                                                             || IsVariableVisibilityMatch(statement["initialValue"]["right"]["name"], variableVisibility)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(VariableDeclarationStatement) && (variableVisibility.Equals(Wildcard)
-                                         || IsVariableVisibilityMatch(statement["initialValue"]["name"], variableVisibility)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(IfStatement) && statement["condition"]["type"].Matches(BinaryOperation)
-                                                                            && (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(statement["condition"]["left"]["name"], variableVisibility)
-                                                                                || IsVariableVisibilityMatch(statement["condition"]["right"]["name"], variableVisibility)))
-                            {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-                            }
-                            else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall))
-                            {
-                                var arguments = statement["expression"]["arguments"].ToSafeList();
-
-                                var argumentPosition = 0;
-                                foreach (var argument in arguments)
-                                {
-                                    if (argument["type"].Matches(BinaryOperation) && (variableVisibility.Equals(Wildcard)
-                                            || IsVariableVisibilityMatch(statement["initialValue"]["left"]["name"], variableVisibility)
-                                            || IsVariableVisibilityMatch(statement["initialValue"]["right"]["name"], variableVisibility)))
-                                    {
-                                        interestedStatements.Add((subNodePosition, statementPosition, argumentPosition), subNode["name"].Value<string>());
-                                    }
-
-                                    argumentPosition++;
-                                }
-                            }
-
-                            statementPosition++;
+                            interestedStatements.Add(key, value);
                         }
                     }
 
                     subNodePosition++;
                 }
             }
+
+            childPosition++;
         }
 
         return new SelectionResult
@@ -327,143 +163,443 @@ public class VariableGettersFiltering
     }
 
     /// <summary>
-    /// 
+    /// Filter any variable access based on the access key provided
     /// </summary>
     /// <param name="jToken"></param>
     /// <param name="accessKey"></param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    //public SelectionResult FilterVariableGettersByAccessKey(JToken jToken, string accessKey)
-    //{
-    //    if (string.IsNullOrWhiteSpace(accessKey))
-    //        throw new ArgumentNullException(nameof(accessKey));
-
-    //    var interestedStatements = new Dictionary<(int, int, int), string>();
-
-    //    var children = jToken["children"] as JArray;
-    //    foreach (var child in children.Children())
-    //    {
-    //        if (child["type"].Matches(ContractDefinition))
-    //        {
-    //            var subNodes = child["subNodes"].ToSafeList();
-
-    //            var subNodePosition = 0;
-    //            foreach (var subNode in subNodes)
-    //            {
-    //                if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
-    //                {
-    //                    var statements = subNode["body"]["statements"].ToSafeList();
-
-    //                    var statementPosition = 0;
-    //                    foreach (var statement in statements)
-    //                    {
-    //                        if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(IndexAccess) && (accessKey.Equals(Wildcard)
-    //                                || (statement["expression"]["index"]["type"].Matches(Identifier) && statement["expression"]["index"]["name"].Matches(accessKey))
-    //                                || (statement["expression"]["index"]["type"].Matches(MemberAccess) && statement["expression"]["index"]["expression"]["name"].Matches(accessKey))))
-    //                        {
-    //                            interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-    //                        }
-    //                        else if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(TupleExpression))
-    //                        {
-    //                            var components = statement["expression"]["components"].ToSafeList();
-
-    //                            var componentPosition = 0;
-    //                            foreach (var component in components)
-    //                            {
-    //                                if ((statement["expression"]["index"]["type"].Matches(Identifier) && statement["expression"]["index"]["name"].Matches(accessKey))
-    //                                    || (statement["expression"]["index"]["type"].Matches(MemberAccess) && statement["expression"]["index"]["expression"]["name"].Matches(accessKey))
-    //                                    || accessKey.Equals(Wildcard))
-    //                                {
-    //                                    interestedStatements.Add((subNodePosition, statementPosition, componentPosition), subNode["name"].Value<string>());
-    //                                }
-
-    //                                componentPosition++;
-    //                            }
-    //                        }
-    //                        else if (statement["type"].Matches(VariableDeclarationStatement) && statement["initialValue"]["type"].Matches(BinaryOperation)
-    //                                 && ((statement["initialValue"]["left"]["type"].Matches(IndexAccess) && (accessKey.Equals(Wildcard)
-    //                                         || (statement["initialValue"]["left"]["index"].Matches(Identifier) && statement["initialValue"]["left"]["index"]["name"].Matches(accessKey))
-    //                                         || (statement["initialValue"]["left"]["index"].Matches(MemberAccess) && statement["initialValue"]["left"]["index"]["expression"]["name"].Matches(accessKey))))
-    //                                     || (statement["initialValue"]["right"]["type"].Matches(IndexAccess) && (accessKey.Equals(Wildcard)
-    //                                         || (statement["initialValue"]["right"]["index"].Matches(Identifier) && statement["initialValue"]["right"]["index"]["name"].Matches(accessKey))
-    //                                         || (statement["initialValue"]["right"]["index"].Matches(MemberAccess) && statement["initialValue"]["right"]["index"]["expression"]["name"].Matches(accessKey))))))
-    //                        {
-    //                            interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-    //                        }
-    //                        else if (statement["type"].Matches(VariableDeclarationStatement) && (variableName.Equals(Wildcard)
-    //                                     || statement["initialValue"]["name"].Matches(variableName)))
-    //                        {
-    //                            interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-    //                        }
-    //                        else if (statement["type"].Matches(IfStatement) && statement["condition"]["type"].Matches(BinaryOperation)
-    //                                                                        && (variableName.Equals(Wildcard) || statement["condition"]["left"]["name"].Matches(variableName)
-    //                                                                            || statement["condition"]["right"]["name"].Matches(variableName)))
-    //                        {
-    //                            interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
-    //                        }
-    //                        else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall))
-    //                        {
-    //                            var arguments = statement["expression"]["arguments"].ToSafeList();
-
-    //                            var argumentPosition = 0;
-    //                            foreach (var argument in arguments)
-    //                            {
-    //                                if (argument["type"].Matches(BinaryOperation) && (variableName.Equals(Wildcard) || statement["initialValue"]["left"]["name"].Matches(variableName)
-    //                                        || statement["initialValue"]["right"]["name"].Matches(variableName)))
-    //                                {
-    //                                    interestedStatements.Add((subNodePosition, statementPosition, argumentPosition), subNode["name"].Value<string>());
-    //                                }
-
-    //                                argumentPosition++;
-    //                            }
-    //                        }
-
-    //                        statementPosition++;
-    //                    }
-    //                }
-
-    //                subNodePosition++;
-    //            }
-    //        }
-    //    }
-
-    //    return new SelectionResult
-    //    {
-    //        InterestedStatements = interestedStatements
-    //    };
-    //}
-
-    #region Helpers
-
-    private bool IsVariableTypeMatch(string variableName, string variableType)
+    public SelectionResult FilterVariableGettersByAccessKey(JToken jToken, string accessKey)
     {
-        return locals.ContainsKey(variableName) && locals[variableName] == variableType;
+        // TODO - FilterVariableGettersByAccessKey
+        throw new NotImplementedException();
     }
 
-    private bool IsVariableTypeMatch(JToken variableName, string variableType)
+    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableName(
+        List<JToken> statements, string variableName, int contractPosition, string functionName, int functionPosition)
     {
-        return variableName?.Value<string>() != null && IsVariableTypeMatch(variableName.Value<string>(), variableType);
+        var statementPosition = 0;
+        foreach (var statement in statements)
+        {
+            foreach (var interestedStatement in CheckStatementForVariableName(statement, variableName, contractPosition, functionName, functionPosition,
+                         statementPosition))
+            {
+                yield return interestedStatement;
+            }
+
+            statementPosition++;
+        }
     }
 
-    private bool IsVariableLocationMatch(string variableName, string variableLocation)
+    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableName(
+        JToken statement, string variableName, int contractPosition, string functionName, int functionPosition, int statementPosition)
     {
-        return locals.ContainsKey(variableName) && locals[variableName] == variableLocation;
+        // 1.   If the statement is a simple return statement such as 'return variableName'
+        //      and either we are searching for a wildcard or the variable name matches
+        if (statement["type"].Matches(ReturnStatement) &&
+            (variableName.Equals(Wildcard) || statement["expression"]["name"].Matches(variableName)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 2.   If the statement is a tuple return statement such as 'return (var1, var2)'
+        //      then we need to check all components within the tuple and if either we are
+        //      either searching for a wildcard, or at least one of the variable name matches
+        else if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(TupleExpression))
+        {
+            var components = statement["expression"]["components"].ToSafeList();
+
+            var componentPosition = 0;
+            foreach (var component in components)
+            {
+                if (variableName.Equals(Wildcard) || component["name"].Matches(variableName))
+                {
+                    yield return new((contractPosition, functionPosition, statementPosition, null, componentPosition), functionName);
+                    break;
+                }
+
+                componentPosition++;
+            }
+        }
+
+        // 3.   If the statement is a variable declaration through a binary operation such as
+        //      'var test = var1 == var2' then we need to check if either we are looking for a
+        //      wildcard or either the left side or the right side variables match the variable name
+        else if (statement["type"].Matches(VariableDeclarationStatement) && statement["initialValue"]["type"].Matches(BinaryOperation)
+                 && (variableName.Equals(Wildcard) || statement["initialValue"]["left"]["name"].Matches(variableName)
+                                                   || statement["initialValue"]["right"]["name"].Matches(variableName)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 4.   If the statement is a variable declaration such as 'var test = var1', then we
+        //      either check if we are looking for a wildcard or that the variable name matches
+        else if (statement["type"].Matches(VariableDeclarationStatement) &&
+                 (variableName.Equals(Wildcard) || statement["initialValue"]["name"].Matches(variableName)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 5.   If the statement is an if statement and either we are looking for a wildcard
+        //      or the left or right side of the condition have a variable matching the variable name
+        else if (statement["type"].Matches(IfStatement) && statement["condition"]["type"].Matches(BinaryOperation) &&
+                 (variableName.Equals(Wildcard) || statement["condition"]["left"]["name"].Matches(variableName)
+                                                || statement["condition"]["right"]["name"].Matches(variableName)))
+        {
+            var ifElseCount = 0;
+
+            yield return new((contractPosition, functionPosition, statementPosition, null, ifElseCount), functionName);
+
+            var ifStatementTrueStatements = statement["trueBody"]?["statements"].ToSafeList();
+            foreach (var (key, value) in CheckStatementsForVariableName(ifStatementTrueStatements,
+                         variableName, contractPosition, functionName, functionPosition))
+            {
+                ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                    (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex ?? key.StatementIndex, ifElseCount), value);
+            }
+
+            if (statement["falseBody"].IsValueNullOrWhitespace() && statement["falseBody"]["type"].Matches("Block"))
+            {
+                var ifStatementFalseStatements = statement["falseBody"]?["statements"].ToSafeList();
+                foreach (var (key, value) in CheckStatementsForVariableName(ifStatementFalseStatements,
+                             variableName, contractPosition, functionName, functionPosition))
+                {
+                    ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                    yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                        (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex ?? key.StatementIndex, ifElseCount), value);
+                }
+            }
+            else if (statement["falseBody"].IsValueNullOrWhitespace())
+            {
+                var ifStatementFalseStatements = statement["falseBody"];
+                foreach (var (key, value) in CheckStatementForVariableName(ifStatementFalseStatements,
+                             variableName, contractPosition, functionName, functionPosition, statementPosition))
+                {
+                    ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                    yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                        (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex, ifElseCount), value);
+                }
+            }
+        }
+
+        // 6.   If the statement is an expression statement such as 'test = var1 + var2'
+        //      and either we are searching for a wildcard or one of the variables on the
+        //      right matches the variable name
+        else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(BinaryOperation) &&
+                 (variableName.Equals(Wildcard) ||
+                  statement["expression"]["right"]["type"].Matches(Identifier) && statement["expression"]["right"]["name"].Matches(variableName) ||
+                  statement["expression"]["right"]["type"].Matches(BinaryOperation) && (statement["expression"]["right"]["left"]["name"].Matches(variableName) ||
+                      statement["expression"]["right"]["right"]["name"].Matches(variableName))))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 7.   If the statement is an expression statement and a function call such as 'storageA.store(numberB)'
+        //      and either we are searching for a wildcard or one of the variables passed to the function call
+        //      match the variable name
+        else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall))
+        {
+            var arguments = statement["expression"]["arguments"].ToSafeList();
+
+            var argumentPosition = 0;
+            foreach (var argument in arguments)
+            {
+                if (variableName.Equals(Wildcard) || argument["name"].Matches(variableName))
+                {
+                    yield return new((contractPosition, functionPosition, statementPosition, null, argumentPosition), functionName);
+                }
+
+                argumentPosition++;
+            }
+        }
     }
 
-    private bool IsVariableLocationMatch(JToken variableName, string variableLocation)
+    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableType(
+        List<JToken> statements, string variableType, string contractName, int contractPosition, string functionName, int functionPosition)
     {
-        return variableName?.Value<string>() != null && IsVariableLocationMatch(variableName.Value<string>(), variableLocation);
+        var statementPosition = 0;
+        foreach (var statement in statements)
+        {
+            foreach (var interestedStatement in CheckStatementForVariableType(statement, variableType, contractName, contractPosition, functionName, functionPosition,
+                         statementPosition))
+            {
+                yield return interestedStatement;
+            }
+
+            statementPosition++;
+        }
     }
 
-    private bool IsVariableVisibilityMatch(string variableName, string variableVisibility)
+    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableType(
+        JToken statement, string variableType, string contractName, int contractPosition, string functionName, int functionPosition, int statementPosition)
     {
-        return locals.ContainsKey(variableName) && locals[variableName] == variableVisibility;
+        // 1.   If the statement is a simple return statement such as 'return variableName'
+        //      and either we are searching for a wildcard or the variable name matches
+        if (statement["type"].Matches(ReturnStatement) &&
+            (variableType.Equals(Wildcard) || IsVariableTypeMatch(contractName, statement["expression"]["name"], variableType)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 2.   If the statement is a tuple return statement such as 'return (var1, var2)'
+        //      then we need to check all components within the tuple and if either we are
+        //      either searching for a wildcard, or at least one of the variable name matches
+        else if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(TupleExpression))
+        {
+            var components = statement["expression"]["components"].ToSafeList();
+
+            var componentPosition = 0;
+            foreach (var component in components)
+            {
+                if (variableType.Equals(Wildcard) || IsVariableTypeMatch(contractName, component["name"], variableType))
+                {
+                    yield return new((contractPosition, functionPosition, statementPosition, null, componentPosition), functionName);
+                    break;
+                }
+
+                componentPosition++;
+            }
+        }
+
+        // 3.   If the statement is a variable declaration through a binary operation such as
+        //      'var test = var1 == var2' then we need to check if either we are looking for a
+        //      wildcard or either the left side or the right side variables match the variable name
+        else if (statement["type"].Matches(VariableDeclarationStatement) && statement["initialValue"]["type"].Matches(BinaryOperation)
+                 && (variableType.Equals(Wildcard) || IsVariableTypeMatch(contractName, statement["initialValue"]["left"]["name"], variableType)
+                                                   || IsVariableTypeMatch(contractName, statement["initialValue"]["right"]["name"], variableType)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 4.   If the statement is a variable declaration such as 'var test = var1', then we
+        //      either check if we are looking for a wildcard or that the variable name matches
+        else if (statement["type"].Matches(VariableDeclarationStatement) &&
+                 (variableType.Equals(Wildcard) || IsVariableTypeMatch(contractName, statement["initialValue"]["name"], variableType)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 5.   If the statement is an if statement and either we are looking for a wildcard
+        //      or the left or right side of the condition have a variable matching the variable name
+        else if (statement["type"].Matches(IfStatement) && statement["condition"]["type"].Matches(BinaryOperation) &&
+                 (variableType.Equals(Wildcard) || IsVariableTypeMatch(contractName, statement["condition"]["left"]["name"], variableType)
+                                                || IsVariableTypeMatch(contractName, statement["condition"]["right"]["name"], variableType)))
+        {
+            var ifElseCount = 0;
+
+            yield return new((contractPosition, functionPosition, statementPosition, null, ifElseCount), functionName);
+
+            var ifStatementTrueStatements = statement["trueBody"]?["statements"].ToSafeList();
+            foreach (var (key, value) in CheckStatementsForVariableType(ifStatementTrueStatements,
+                         variableType, contractName, contractPosition, functionName, functionPosition))
+            {
+                ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                    (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex ?? key.StatementIndex, ifElseCount), value);
+            }
+
+            if (statement["falseBody"].IsValueNullOrWhitespace() && statement["falseBody"]["type"].Matches("Block"))
+            {
+                var ifStatementFalseStatements = statement["falseBody"]?["statements"].ToSafeList();
+                foreach (var (key, value) in CheckStatementsForVariableType(ifStatementFalseStatements,
+                             variableType, contractName, contractPosition, functionName, functionPosition))
+                {
+                    ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                    yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                        (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex ?? key.StatementIndex, ifElseCount), value);
+                }
+            }
+            else if (statement["falseBody"].IsValueNullOrWhitespace())
+            {
+                var ifStatementFalseStatements = statement["falseBody"];
+                foreach (var (key, value) in CheckStatementForVariableType(ifStatementFalseStatements,
+                             variableType, contractName, contractPosition, functionName, functionPosition, statementPosition))
+                {
+                    ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                    yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                        (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex, ifElseCount), value);
+                }
+            }
+        }
+
+        // 6.   If the statement is an expression statement such as 'test = var1 + var2'
+        //      and either we are searching for a wildcard or one of the variables on the
+        //      right matches the variable name
+        else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(BinaryOperation) &&
+                 (variableType.Equals(Wildcard) ||
+                  statement["expression"]["right"]["type"].Matches(Identifier) && IsVariableTypeMatch(contractName, statement["expression"]["right"]["name"], variableType) ||
+                  statement["expression"]["right"]["type"].Matches(BinaryOperation) && (IsVariableTypeMatch(contractName, statement["expression"]["right"]["left"]["name"], variableType) ||
+                      IsVariableTypeMatch(contractName, statement["expression"]["right"]["right"]["name"], variableType))))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 7.   If the statement is an expression statement and a function call such as 'storageA.store(numberB)'
+        //      and either we are searching for a wildcard or one of the variables passed to the function call
+        //      match the variable name
+        else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall))
+        {
+            var arguments = statement["expression"]["arguments"].ToSafeList();
+
+            var argumentPosition = 0;
+            foreach (var argument in arguments)
+            {
+                if (variableType.Equals(Wildcard) || IsVariableTypeMatch(contractName, argument["name"], variableType))
+                {
+                    yield return new((contractPosition, functionPosition, statementPosition, null, argumentPosition), functionName);
+                }
+
+                argumentPosition++;
+            }
+        }
     }
 
-    private bool IsVariableVisibilityMatch(JToken variableName, string variableVisibility)
+    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableVisibility(
+        List<JToken> statements, string variableVisibility, string contractName, int contractPosition, string functionName, int functionPosition)
     {
-        return variableName?.Value<string>() != null && IsVariableVisibilityMatch(variableName.Value<string>(), variableVisibility);
+        var statementPosition = 0;
+        foreach (var statement in statements)
+        {
+            foreach (var interestedStatement in CheckStatementForVariableVisibility(statement, variableVisibility, contractName, contractPosition, functionName, functionPosition,
+                         statementPosition))
+            {
+                yield return interestedStatement;
+            }
+
+            statementPosition++;
+        }
     }
 
-    #endregion
+    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableVisibility(
+        JToken statement, string variableVisibility, string contractName, int contractPosition, string functionName, int functionPosition, int statementPosition)
+    {
+        // 1.   If the statement is a simple return statement such as 'return variableName'
+        //      and either we are searching for a wildcard or the variable name matches
+        if (statement["type"].Matches(ReturnStatement) &&
+            (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(contractName, statement["expression"]["name"], variableVisibility)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 2.   If the statement is a tuple return statement such as 'return (var1, var2)'
+        //      then we need to check all components within the tuple and if either we are
+        //      either searching for a wildcard, or at least one of the variable name matches
+        else if (statement["type"].Matches(ReturnStatement) && statement["expression"]["type"].Matches(TupleExpression))
+        {
+            var components = statement["expression"]["components"].ToSafeList();
+
+            var componentPosition = 0;
+            foreach (var component in components)
+            {
+                if (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(contractName, component["name"], variableVisibility))
+                {
+                    yield return new((contractPosition, functionPosition, statementPosition, null, componentPosition), functionName);
+                    break;
+                }
+
+                componentPosition++;
+            }
+        }
+
+        // 3.   If the statement is a variable declaration through a binary operation such as
+        //      'var test = var1 == var2' then we need to check if either we are looking for a
+        //      wildcard or either the left side or the right side variables match the variable name
+        else if (statement["type"].Matches(VariableDeclarationStatement) && statement["initialValue"]["type"].Matches(BinaryOperation)
+                 && (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(contractName, statement["initialValue"]["left"]["name"], variableVisibility)
+                                                         || IsVariableVisibilityMatch(contractName, statement["initialValue"]["right"]["name"], variableVisibility)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 4.   If the statement is a variable declaration such as 'var test = var1', then we
+        //      either check if we are looking for a wildcard or that the variable name matches
+        else if (statement["type"].Matches(VariableDeclarationStatement) &&
+                 (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(contractName, statement["initialValue"]["name"], variableVisibility)))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 5.   If the statement is an if statement and either we are looking for a wildcard
+        //      or the left or right side of the condition have a variable matching the variable name
+        else if (statement["type"].Matches(IfStatement) && statement["condition"]["type"].Matches(BinaryOperation) &&
+                 (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(contractName, statement["condition"]["left"]["name"], variableVisibility)
+                                                      || IsVariableVisibilityMatch(contractName, statement["condition"]["right"]["name"], variableVisibility)))
+        {
+            var ifElseCount = 0;
+
+            yield return new((contractPosition, functionPosition, statementPosition, null, ifElseCount), functionName);
+
+            var ifStatementTrueStatements = statement["trueBody"]?["statements"].ToSafeList();
+            foreach (var (key, value) in CheckStatementsForVariableVisibility(ifStatementTrueStatements,
+                         variableVisibility, contractName, contractPosition, functionName, functionPosition))
+            {
+                ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                    (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex ?? key.StatementIndex, ifElseCount), value);
+            }
+
+            if (statement["falseBody"].IsValueNullOrWhitespace() && statement["falseBody"]["type"].Matches("Block"))
+            {
+                var ifStatementFalseStatements = statement["falseBody"]?["statements"].ToSafeList();
+                foreach (var (key, value) in CheckStatementsForVariableVisibility(ifStatementFalseStatements,
+                             variableVisibility, contractName, contractPosition, functionName, functionPosition))
+                {
+                    ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                    yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                        (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex ?? key.StatementIndex, ifElseCount), value);
+                }
+            }
+            else if (statement["falseBody"].IsValueNullOrWhitespace())
+            {
+                var ifStatementFalseStatements = statement["falseBody"];
+                foreach (var (key, value) in CheckStatementForVariableVisibility(ifStatementFalseStatements,
+                             variableVisibility, contractName, contractPosition, functionName, functionPosition, statementPosition))
+                {
+                    ifElseCount += key.ArgumentIndex + 1 ?? 0;
+
+                    yield return new KeyValuePair<(int, int, int, int?, int?), string>(
+                        (key.ContractIndex, key.FunctionIndex, statementPosition, key.SubStatementIndex, ifElseCount), value);
+                }
+            }
+        }
+
+        // 6.   If the statement is an expression statement such as 'test = var1 + var2'
+        //      and either we are searching for a wildcard or one of the variables on the
+        //      right matches the variable name
+        else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(BinaryOperation) &&
+                 (variableVisibility.Equals(Wildcard) ||
+                  statement["expression"]["right"]["type"].Matches(Identifier) && IsVariableVisibilityMatch(contractName, statement["expression"]["right"]["name"], variableVisibility) ||
+                  statement["expression"]["right"]["type"].Matches(BinaryOperation) && (IsVariableVisibilityMatch(contractName, statement["expression"]["right"]["left"]["name"], variableVisibility) ||
+                      IsVariableVisibilityMatch(contractName, statement["expression"]["right"]["right"]["name"], variableVisibility))))
+        {
+            yield return new((contractPosition, functionPosition, statementPosition, null, null), functionName);
+        }
+
+        // 7.   If the statement is an expression statement and a function call such as 'storageA.store(numberB)'
+        //      and either we are searching for a wildcard or one of the variables passed to the function call
+        //      match the variable name
+        else if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall))
+        {
+            var arguments = statement["expression"]["arguments"].ToSafeList();
+
+            var argumentPosition = 0;
+            foreach (var argument in arguments)
+            {
+                if (variableVisibility.Equals(Wildcard) || IsVariableVisibilityMatch(contractName, argument["name"], variableVisibility))
+                {
+                    yield return new((contractPosition, functionPosition, statementPosition, null, argumentPosition), functionName);
+                }
+
+                argumentPosition++;
+            }
+        }
+    }
 }

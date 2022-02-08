@@ -519,9 +519,11 @@ public class FunctionFiltering : IFunctionFiltering
         if (string.IsNullOrWhiteSpace(functionName))
             throw new ArgumentNullException(nameof(functionName));
 
-        var interestedStatements = new Dictionary<(int, int, int), string>();
+        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
         var children = jToken["children"] as JArray;
+
+        var childPosition = 0;
         foreach (var child in children.Children())
         {
             if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
@@ -542,7 +544,7 @@ public class FunctionFiltering : IFunctionFiltering
                                                                                && statement["expression"]["expression"]["expression"]["name"].Matches(instanceName)
                                                                                && statement["expression"]["expression"]["memberName"].Matches(functionName))
                             {
-                                interestedStatements.Add((subNodePosition, statementPosition, -1), subNode["name"].Value<string>());
+                                interestedStatements.Add((childPosition, subNodePosition, statementPosition, null, null), subNode["name"].Value<string>());
                             }
 
                             statementPosition++;
@@ -552,6 +554,8 @@ public class FunctionFiltering : IFunctionFiltering
                     subNodePosition++;
                 }
             }
+
+            childPosition++;
         }
 
         return new SelectionResult

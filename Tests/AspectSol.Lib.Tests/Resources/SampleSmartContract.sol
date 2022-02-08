@@ -17,7 +17,7 @@ contract StorageA is Space {
 
 contract StorageB {
 
-    uint256 numberB;
+    uint256 public numberB;
     address someAddress;
     StorageA storageA;
 
@@ -33,13 +33,35 @@ contract StorageB {
         return number1 + number2;
     }
 
-    function areEqual(uint256 number1, uint256 number2) private pure returns (bool) {
-        return number1 == number2;
+    function areEqual(uint256 number1, uint256 number2) private pure returns (bool, uint256) {
+        if(numberB == number1){
+            numberB = number1;
+        }
+
+        else if(number2 == numberB){
+            number2 = numberB;
+        }
+
+        else{
+            number1 = numberB + number2;
+            number1 = numberB - number2;
+            number1 = numberB / number2;
+            number1 = numberB * number2;
+        }
+
+        if(numberB == number2){
+            number2 = numberB;
+        }
+
+        bool test = numberB == number2;
+        uint256 anotherTest = number;
+
+        return (test, numberB);
     }
 
-    function storeInStorageA() private view returns (uint256) {
+    function storeInStorageA() private view returns (bool) {
         storageA.store(numberB);
-        return numberB;
+        return true;
     }
 
     modifier onlyOwner() {
