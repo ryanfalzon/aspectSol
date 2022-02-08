@@ -21,7 +21,7 @@ public class Parser : AbstractParser
 
     private AspectNode Match()
     {
-        AspectNode node = null;
+        AspectNode node;
         if (LookaheadFirst.TokenType == TokenType.Aspect)
         {
             DiscardToken();
@@ -44,7 +44,7 @@ public class Parser : AbstractParser
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.Aspect}] but found: [{LookaheadFirst.Value}]");
         }
 
         return node;
@@ -64,7 +64,7 @@ public class Parser : AbstractParser
         }
         else
         {
-            throw new DslParserException("");
+            throw new DslParserException("provided statement not recognized. Current version of AspectSol only supports append and modification statements");
         }
 
         DiscardToken(TokenType.OpenScope);
@@ -98,7 +98,7 @@ public class Parser : AbstractParser
         }
         else
         {
-            throw new DslParserException("");
+            throw new DslParserException("Provided selector not recognized. Current version of AspectSol only supports definition and variable selectors");
         }
 
         appendStatement.Selectors = selectors;
@@ -136,17 +136,24 @@ public class Parser : AbstractParser
                 ModifierSyntax = MatchModifierSyntax()
             };
         }
-        else if (LookaheadFirst.TokenType == TokenType.ImplementingInterface && LookaheadSecond.TokenType == TokenType.StringValue)
+        else if (LookaheadFirst.TokenType == TokenType.ImplementingInterface)
         {
             DiscardToken();
-            definitionSelector.DefinitionDecorator = new ImplementingDefinitionDecoratorNode
+            if (LookaheadFirst.TokenType == TokenType.StringValue)
             {
-                InterfaceName = LookaheadFirst.Value
-            };
+                definitionSelector.DefinitionDecorator = new ImplementingDefinitionDecoratorNode
+                {
+                    InterfaceName = LookaheadFirst.Value
+                };
+            }
+            else
+            {
+                throw new DslParserException($"Expected [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
+            }
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.TaggedWith}] or [{TokenType.ImplementingInterface}] but found: [{LookaheadFirst.Value}]");
         }
 
         return definitionSelector;
@@ -172,7 +179,7 @@ public class Parser : AbstractParser
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.Wildcard}] or [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
         }
 
         return definitionSyntax;
@@ -202,33 +209,34 @@ public class Parser : AbstractParser
             selector = new AddressContractSelectorNode { ContractAddress = LookaheadFirst.Value };
             DiscardToken();
         }
-        else if (LookaheadFirst.TokenType == TokenType.StringValue &&
-                 LookaheadSecond.TokenType == TokenType.DoubleColon)
-        {
-            var contractName = LookaheadFirst.Value;
-
-            DiscardToken();
-            DiscardToken();
-            ValidateToken(TokenType.StringValue);
-
-            var interfaceName = LookaheadFirst.Value;
-
-            selector = new InterfaceContractSelectorNode
-            {
-                ContractName = contractName,
-                InterfaceName = interfaceName
-            };
-
-            DiscardToken();
-        }
         else if (LookaheadFirst.TokenType == TokenType.StringValue)
         {
+            if (LookaheadSecond.TokenType == TokenType.DoubleColon)
+            {
+                var contractName = LookaheadFirst.Value;
+
+                DiscardToken();
+                DiscardToken();
+                ValidateToken(TokenType.StringValue);
+
+                var interfaceName = LookaheadFirst.Value;
+
+                selector = new InterfaceContractSelectorNode
+                {
+                    ContractName = contractName,
+                    InterfaceName = interfaceName
+                };
+
+                DiscardToken();
+            }
+
             selector = new NameContractSelectorNode { ContractName = LookaheadFirst.Value };
             DiscardToken();
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.Wildcard}] or [{TokenType.OpenDoubleSquareBrackets}] or" +
+                                         $"[{TokenType.Address}] or [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
         }
 
         return selector;
@@ -258,7 +266,7 @@ public class Parser : AbstractParser
             if (LookaheadFirst.TokenType != TokenType.Comma &&
                 LookaheadFirst.TokenType != TokenType.CloseParenthesis)
             {
-                // TODO - Throw error is parse was not successful
+                throw new DslParserException($"Expected [{TokenType.Comma}] or [{TokenType.CloseParenthesis}] but found: [{LookaheadFirst.Value}]");
             }
         }
 
@@ -303,7 +311,7 @@ public class Parser : AbstractParser
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.OpenParenthesis}] or visibility expression but found: [{LookaheadFirst.Value}]");
         }
 
         return modifierSyntax;
@@ -340,7 +348,7 @@ public class Parser : AbstractParser
                     if (LookaheadFirst.TokenType != TokenType.Comma &&
                         LookaheadFirst.TokenType != TokenType.CloseParenthesis)
                     {
-                        // TODO - Throw error is parse was not successful
+                        throw new DslParserException($"Expected [{TokenType.Comma}] or [{TokenType.CloseParenthesis}] but found: [{LookaheadFirst.Value}]");
                     }
                 }
 
@@ -350,7 +358,7 @@ public class Parser : AbstractParser
             }
             else
             {
-                // TODO - Throw error is parse was not successful
+                throw new DslParserException($"Expected [{TokenType.OpenParenthesis}] but found: [{LookaheadFirst.Value}]");
             }
         }
 
@@ -388,7 +396,7 @@ public class Parser : AbstractParser
             }
             else
             {
-                // TODO - Throw error is parse was not successful
+                throw new DslParserException($"Expected [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
             }
         }
 
@@ -425,21 +433,16 @@ public class Parser : AbstractParser
             {
                 variableSelector.VariableType = new MappingSelectorNode { MappingName = LookaheadFirst.Value };
                 DiscardToken();
-
-                if (LookaheadFirst.TokenType != TokenType.CloseDoubleSquareBrackets)
-                {
-                    // TODO - Throw error is parse was not successful
-                }
-                DiscardToken();
+                DiscardToken(TokenType.CloseDoubleSquareBrackets);
             }
             else
             {
-                // TODO - Throw error is parse was not successful
+                throw new DslParserException($"Expected [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
             }
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.Wildcard}] or [{TokenType.StringValue}] or [{TokenType.OpenDoubleSquareBrackets}] but found: [{LookaheadFirst.Value}]");
         }
 
         // Step 3 - Parse variable location
@@ -452,60 +455,62 @@ public class Parser : AbstractParser
             variableSelector.VariableNameSelector = new WildcardSelectorNode();
             DiscardToken();
         }
-        else if (LookaheadFirst.TokenType == TokenType.StringValue &&
-            LookaheadSecond.TokenType == TokenType.OpenSquareBrackets)
-        {
-            var dictionaryElementSelector = new DictionaryElementVariableNameSelectoreNode
-            {
-                VariableName = LookaheadFirst.Value
-            };
-
-            DiscardToken();
-            DiscardToken();
-
-            if (LookaheadFirst.TokenType == TokenType.Wildcard)
-            {
-                dictionaryElementSelector.KeySelector = new WildcardSelectorNode();
-            }
-            else if (LookaheadFirst.TokenType == TokenType.OpenSquareBrackets)
-            {
-                DiscardToken();
-                ValidateToken(TokenType.StringValue);
-
-                dictionaryElementSelector.KeySelector = new MappingSelectorNode { MappingName = LookaheadFirst.Value };
-                DiscardToken();
-
-                DiscardToken(TokenType.CloseDoubleSquareBrackets);
-            }
-            else if (LookaheadFirst.TokenType == TokenType.StringValue)
-            {
-                dictionaryElementSelector.KeySelector = new ConstantKeySelectorNode { Constant = LookaheadFirst.Value };
-
-                DiscardToken();
-            }
-
-            DiscardToken(TokenType.CloseSquareBrackets);
-        }
-        else if (LookaheadFirst.TokenType == TokenType.StringValue &&
-                 LookaheadSecond.TokenType == TokenType.FullStop)
-        {
-            variableSelector.VariableNameSelector = MatchPropertySelector();
-        }
         else if (LookaheadFirst.TokenType == TokenType.StringValue)
         {
             DiscardToken();
-
-            variableSelector.VariableNameSelector = new NameVariableNameSelectorNode
+            if (LookaheadSecond.TokenType == TokenType.OpenSquareBrackets)
             {
-                VariableName = LookaheadFirst.Value
+                var dictionaryElementSelector = new DictionaryElementVariableNameSelectoreNode
+                {
+                    VariableName = LookaheadFirst.Value
+                };
 
-            };
+                DiscardToken();
+                DiscardToken();
 
-            DiscardToken();
+                if (LookaheadFirst.TokenType == TokenType.Wildcard)
+                {
+                    dictionaryElementSelector.KeySelector = new WildcardSelectorNode();
+                }
+                else if (LookaheadFirst.TokenType == TokenType.OpenSquareBrackets)
+                {
+                    DiscardToken();
+                    ValidateToken(TokenType.StringValue);
+
+                    dictionaryElementSelector.KeySelector = new MappingSelectorNode { MappingName = LookaheadFirst.Value };
+                    DiscardToken();
+
+                    DiscardToken(TokenType.CloseDoubleSquareBrackets);
+                }
+                else if (LookaheadFirst.TokenType == TokenType.StringValue)
+                {
+                    dictionaryElementSelector.KeySelector = new ConstantKeySelectorNode { Constant = LookaheadFirst.Value };
+
+                    DiscardToken();
+                }
+
+                DiscardToken(TokenType.CloseSquareBrackets);
+            }
+            else if (LookaheadSecond.TokenType == TokenType.FullStop)
+            {
+                variableSelector.VariableNameSelector = MatchPropertySelector();
+            }
+            else
+            {
+                DiscardToken();
+
+                variableSelector.VariableNameSelector = new NameVariableNameSelectorNode
+                {
+                    VariableName = LookaheadFirst.Value
+
+                };
+
+                DiscardToken();
+            }
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.Wildcard}] or [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
         }
 
         // Step 5 - Parse variable decorator
@@ -521,12 +526,12 @@ public class Parser : AbstractParser
             }
             else
             {
-                // TODO - Throw error is parse was not successful
+                throw new DslParserException($"Expected [{TokenType.Public}] or [{TokenType.Private}] or [{TokenType.Internal}] but found: [{LookaheadFirst.Value}]");
             }
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.TaggedWith}] but found: [{LookaheadFirst.Value}]");
         }
 
         return variableSelector;
@@ -583,7 +588,7 @@ public class Parser : AbstractParser
         }
         else
         {
-            // TODO - Throw error is parse was not successful
+            throw new DslParserException($"Expected [{TokenType.AddToDeclaration}] or [{TokenType.UpdateDefinition}] but found: [{LookaheadFirst.Value}]");
         }
 
         return modificationStatement;
