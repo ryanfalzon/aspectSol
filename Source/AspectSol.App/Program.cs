@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AspectSol.Lib.App;
+using AspectSol.Lib.Infra;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,19 +9,21 @@ namespace AspectSol.App;
 public class Program
 {
     private readonly ILogger<Program> _logger;
+    private readonly AppService _appService;
 
-    public Program(ILogger<Program> logger)
+    public Program(ILogger<Program> logger, AppService appService)
     {
         _logger = logger;
+        _appService = appService;
     }
 
     public static void Main(string[] args)
     {
         var host = CreateHostBuilder(args).Build();
-        host.Services.GetRequiredService<Program>().Run(args);
+        host.Services.GetRequiredService<Program>().Run(args).RunSynchronously();
     }
 
-    public void Run(string[] args)
+    public async Task Run(string[] args)
     {
         if (args.Length == 0)
         {
@@ -36,7 +40,7 @@ public class Program
                     var smartContractFilePath = args[2];
                     var outputFilePath = args[3];
 
-
+                    await _appService.Execute(aspectSolFilePath, smartContractFilePath, outputFilePath);
                 }
                 break;
 
@@ -49,6 +53,7 @@ public class Program
             .ConfigureServices(services =>
             {
                 services.AddTransient<Program>();
+                services.AddAspectSolServiceConfig();
             });
     }
 }

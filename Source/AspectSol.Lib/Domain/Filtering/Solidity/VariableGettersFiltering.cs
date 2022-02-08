@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
 
-public class VariableGettersFiltering : VariableFiltering
+public class VariableGettersFiltering : VariableFiltering, IVariableGettersFiltering
 {
     private const string Wildcard = "*";
     private const string FunctionDefinition = "FunctionDefinition";
@@ -168,7 +168,7 @@ public class VariableGettersFiltering : VariableFiltering
     /// <param name="jToken"></param>
     /// <param name="accessKey"></param>
     /// <returns></returns>
-    public SelectionResult FilterVariableGettersByAccessKey(JToken jToken, string accessKey)
+    public SelectionResult FilterVariableGettersByVariableAccessKey(JToken jToken, string accessKey)
     {
         // TODO - FilterVariableGettersByAccessKey
         throw new NotImplementedException();
