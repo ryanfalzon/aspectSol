@@ -4,16 +4,13 @@ namespace AspectSol.Lib.Domain.AST;
 
 public abstract class Node
 {
-    public override abstract string ToString();
+    public abstract override string ToString();
 
     private StringBuilder indentation;
 
     protected string GetIndentation()
     {
-        if (indentation == null)
-        {
-            indentation = new();
-        }
+        indentation ??= new();
 
         return indentation.ToString();
     }

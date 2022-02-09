@@ -13,6 +13,7 @@ public static class AspectSolCollectionExtensions
     public static void AddAspectSolServiceConfig(this IServiceCollection services)
     {
         services.AddTransient<AppService>();
+        services.AddTransient<SolidityFilteringService>();
 
         services.AddScoped<ITokenizer, Tokenizer>();
         services.AddScoped<IParser, Parser>();
