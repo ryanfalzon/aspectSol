@@ -7,6 +7,7 @@ public class ScriptFactory
         var script = scriptName switch
         {
             "GenerateAST" => await File.ReadAllTextAsync($"scripts/{scriptName}.js"),
+            "GetPartialASTForFunction" => await File.ReadAllTextAsync($"scripts/{scriptName}.js"),
             _ => throw new FileNotFoundException($"Script with the name '{scriptName}' could not be found")
         };
 
