@@ -3,178 +3,9 @@ using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
 
-public class VariableGettersFiltering : VariableFiltering, IVariableGettersFiltering
+public class VariableGettersFiltering : VariableFiltering
 {
-    private const string Wildcard = "*";
-    private const string FunctionDefinition = "FunctionDefinition";
-    private const string ExpressionStatement = "ExpressionStatement";
-    private const string ReturnStatement = "ReturnStatement";
-    private const string VariableDeclarationStatement = "VariableDeclarationStatement";
-    private const string FunctionCall = "FunctionCall";
-    private const string BinaryOperation = "BinaryOperation";
-    private const string IfStatement = "IfStatement";
-    private const string TupleExpression = "TupleExpression";
-    private const string Identifier = "Identifier";
-    private const string MemberAccess = "MemberAccess";
-    private const string IndexAccess = "IndexAccess";
-
-    /// <summary>
-    /// Filter any variable access based on the name of the variable
-    /// </summary>
-    /// <param name="jToken"></param>
-    /// <param name="variableName"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterVariableGettersByVariableName(JToken jToken, string variableName)
-    {
-        if (string.IsNullOrWhiteSpace(variableName))
-            throw new ArgumentNullException(nameof(variableName));
-
-        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
-
-        var children = jToken["children"] as JArray;
-
-        var childPosition = 0;
-        foreach (var child in children.Children())
-        {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
-            {
-                var subNodes = child["subNodes"].ToSafeList();
-
-                var subNodePosition = 0;
-                foreach (var subNode in subNodes)
-                {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
-                    {
-                        var statements = subNode["body"]?["statements"].ToSafeList();
-                        foreach (var (key, value) in CheckStatementsForVariableName(statements, variableName, childPosition, subNode["name"].Value<string>(), subNodePosition))
-                        {
-                            interestedStatements.Add(key, value);
-                        }
-                    }
-
-                    subNodePosition++;
-                }
-            }
-
-            childPosition++;
-        }
-
-        return new SelectionResult
-        {
-            InterestedStatements = interestedStatements
-        };
-    }
-
-    /// <summary>
-    /// Filter any variable access based on the type of the variable
-    /// </summary>
-    /// <param name="jToken"></param>
-    /// <param name="variableType"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterVariableGettersByVariableType(JToken jToken, string variableType)
-    {
-        if (string.IsNullOrWhiteSpace(variableType))
-            throw new ArgumentNullException(nameof(variableType));
-
-        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
-
-        var children = jToken["children"] as JArray;
-
-        var childPosition = 0;
-        foreach (var child in children.Children())
-        {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
-            {
-                var subNodes = child["subNodes"].ToSafeList();
-
-                var subNodePosition = 0;
-                foreach (var subNode in subNodes)
-                {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
-                    {
-                        var statements = subNode["body"]?["statements"].ToSafeList();
-                        foreach (var (key, value) in CheckStatementsForVariableType(statements, variableType, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
-                        {
-                            interestedStatements.Add(key, value);
-                        }
-                    }
-
-                    subNodePosition++;
-                }
-            }
-
-            childPosition++;
-        }
-
-        return new SelectionResult
-        {
-            InterestedStatements = interestedStatements
-        };
-    }
-
-    /// <summary>
-    /// Filter any variable access based on the visibility of the variable
-    /// </summary>
-    /// <param name="jToken"></param>
-    /// <param name="variableVisibility"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterVariableGettersByVariableVisibility(JToken jToken, string variableVisibility)
-    {
-        if (string.IsNullOrWhiteSpace(variableVisibility))
-            throw new ArgumentNullException(nameof(variableVisibility));
-
-        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
-
-        var children = jToken["children"] as JArray;
-
-        var childPosition = 0;
-        foreach (var child in children.Children())
-        {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
-            {
-                var subNodes = child["subNodes"].ToSafeList();
-
-                var subNodePosition = 0;
-                foreach (var subNode in subNodes)
-                {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
-                    {
-                        var statements = subNode["body"]?["statements"].ToSafeList();
-                        foreach (var (key, value) in CheckStatementsForVariableVisibility(statements, variableVisibility, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
-                        {
-                            interestedStatements.Add(key, value);
-                        }
-                    }
-
-                    subNodePosition++;
-                }
-            }
-
-            childPosition++;
-        }
-
-        return new SelectionResult
-        {
-            InterestedStatements = interestedStatements
-        };
-    }
-
-    /// <summary>
-    /// Filter any variable access based on the access key provided
-    /// </summary>
-    /// <param name="jToken"></param>
-    /// <param name="accessKey"></param>
-    /// <returns></returns>
-    public SelectionResult FilterVariableGettersByVariableAccessKey(JToken jToken, string accessKey)
-    {
-        // TODO - FilterVariableGettersByAccessKey
-        throw new NotImplementedException();
-    }
-
-    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableName(
+    protected override IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableName(
         List<JToken> statements, string variableName, int contractPosition, string functionName, int functionPosition)
     {
         var statementPosition = 0;
@@ -190,7 +21,7 @@ public class VariableGettersFiltering : VariableFiltering, IVariableGettersFilte
         }
     }
 
-    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableName(
+    protected override IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableName(
         JToken statement, string variableName, int contractPosition, string functionName, int functionPosition, int statementPosition)
     {
         // 1.   If the statement is a simple return statement such as 'return variableName'
@@ -317,7 +148,7 @@ public class VariableGettersFiltering : VariableFiltering, IVariableGettersFilte
         }
     }
 
-    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableType(
+    protected override IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableType(
         List<JToken> statements, string variableType, string contractName, int contractPosition, string functionName, int functionPosition)
     {
         var statementPosition = 0;
@@ -333,7 +164,7 @@ public class VariableGettersFiltering : VariableFiltering, IVariableGettersFilte
         }
     }
 
-    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableType(
+    protected override IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableType(
         JToken statement, string variableType, string contractName, int contractPosition, string functionName, int functionPosition, int statementPosition)
     {
         // 1.   If the statement is a simple return statement such as 'return variableName'
@@ -460,7 +291,7 @@ public class VariableGettersFiltering : VariableFiltering, IVariableGettersFilte
         }
     }
 
-    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableVisibility(
+    protected override IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementsForVariableVisibility(
         List<JToken> statements, string variableVisibility, string contractName, int contractPosition, string functionName, int functionPosition)
     {
         var statementPosition = 0;
@@ -476,7 +307,7 @@ public class VariableGettersFiltering : VariableFiltering, IVariableGettersFilte
         }
     }
 
-    private IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableVisibility(
+    protected override IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>> CheckStatementForVariableVisibility(
         JToken statement, string variableVisibility, string contractName, int contractPosition, string functionName, int functionPosition, int statementPosition)
     {
         // 1.   If the statement is a simple return statement such as 'return variableName'

@@ -26,7 +26,7 @@ public static class AspectSolCollectionExtensions
         services.AddScoped<INodeGenerator, NodeGenerator>();
         services.AddScoped<ISourceManipulation, SourceManipulation>();
         services.AddScoped<IVariableDefinitionFiltering, VariableDefinitionFiltering>();
-        services.AddScoped<IVariableGettersFiltering, VariableGettersFiltering>();
-        services.AddScoped<IVariableSettersFiltering, VariableSettersFiltering>();
+        services.AddTransient<VariableGettersFiltering>();
+        services.AddTransient<VariableSettersFiltering>();
     }
 }
