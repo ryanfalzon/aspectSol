@@ -1,6 +1,9 @@
-﻿// SPDX-License-Identifier: GPL-3.0
+﻿pragma solidity >=0.7.0 <0.9.0;
 
-pragma solidity >=0.7.0 <0.9.0;
+interface Space {
+    function store(uint256 num) public;
+    function retrieve() public view returns(uint256);
+}
 
 contract StorageA is Space {
 
@@ -68,9 +71,4 @@ contract StorageB {
         require(msg.sender == owner);
         _;
     }
-}
-
-interface Space {
-    function store(uint256 num) public;
-    function retrieve() public view returns(uint256);
 }

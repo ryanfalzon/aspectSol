@@ -11,13 +11,14 @@
 	</Target>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-		<PackageReference Include="Jering.Javascript.NodeJS" Version="6.0.1" />
+		<PackageReference Include="coverlet.collector" Version="3.1.2" />
+		<PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="Domain\JavascriptExecution\Scripts\**">
+		<Content Include="Domain\JavascriptExecution\dist\**">
 			<TargetPath>scripts\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>

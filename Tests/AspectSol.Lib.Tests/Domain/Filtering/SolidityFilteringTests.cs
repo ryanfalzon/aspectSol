@@ -3,7 +3,6 @@ using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using System;
-using System.IO;
 
 namespace AspectSol.Lib.Tests.Domain.Filtering;
 
@@ -24,8 +23,7 @@ public class SolidityFilteringTests
         var scriptFactory = new ScriptFactory();
 
         var javascriptExecutor = new JavascriptExecutor(nodeJsService, scriptFactory);
-        var smartContract = File.ReadAllTextAsync("Resources/SampleSmartContract.sol").Result;
-        var result = javascriptExecutor.Execute("GenerateAST", new object[] { smartContract }).Result;
+        var result = javascriptExecutor.Execute("generateAst", new object[] { "Resources/SampleSmartContract.sol" }).Result;
 
         ParsedContract = JToken.Parse(result);
     }
