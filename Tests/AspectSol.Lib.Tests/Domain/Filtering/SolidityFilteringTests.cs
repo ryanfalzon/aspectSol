@@ -1,6 +1,7 @@
 ﻿using AspectSol.Lib.Domain.JavascriptExecution;
 using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 
@@ -11,6 +12,7 @@ public class SolidityFilteringTests
     protected const string WildcardToken = "*";
 
     protected readonly JToken ParsedContract;
+    protected readonly JToken ContractAst;
 
     protected SolidityFilteringTests()
     {
@@ -23,8 +25,10 @@ public class SolidityFilteringTests
         var scriptFactory = new ScriptFactory();
 
         var javascriptExecutor = new JavascriptExecutor(nodeJsService, scriptFactory);
-        var result = javascriptExecutor.Execute("generateAst", new object[] { "Resources/SampleSmartContract.sol" }).Result;
+        var response = javascriptExecutor.Execute("generateAst", new object[] { "Resources/SampleSmartContract.sol" }).Result;
+        var deserializedResponse = JsonConvert.DeserializeObject<JavascriptResponse>(response);
 
-        ParsedContract = JToken.Parse(result);
+        ParsedContract = JToken.Parse(deserializedResponse?.Data ?? string.Empty);
+        ContractAst = ParsedContract["sources"]?.First?.First?["ast"];
     }
 }

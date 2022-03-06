@@ -23,11 +23,11 @@ public class ContractFiltering : IContractFiltering
 
         var interestedContracts = new List<string>();
 
-        if (jToken["children"] is JArray children)
+        if (jToken["nodes"] is JArray children)
         {
             foreach (var child in children.Children())
             {
-                if (child["type"].Matches(ContractDefinition) && child["kind"].Matches("contract") &&
+                if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
                     (contractName.Equals(Wildcard) || child["name"].Matches(contractName)))
                 {
                     interestedContracts.Add((child["name"] ?? throw new NullReferenceException()).Value<string>());
@@ -56,17 +56,17 @@ public class ContractFiltering : IContractFiltering
 
         var interestedContracts = new List<string>();
 
-        if (jToken["children"] is JArray children)
+        if (jToken["nodes"] is JArray children)
         {
             foreach (var child in children.Children())
             {
-                if (child["type"].Matches(ContractDefinition) && child["kind"].Matches("contract"))
+                if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract"))
                 {
                     var baseContracts = child["baseContracts"].ToSafeList();
 
                     foreach (var baseContract in baseContracts)
                     {
-                        if (interfaceName.Equals(Wildcard) || (baseContract["baseName"] ?? throw new NullReferenceException()).Value<JObject>()!["namePath"]
+                        if (interfaceName.Equals(Wildcard) || (baseContract["baseName"] ?? throw new NullReferenceException()).Value<JObject>()!["name"]
                             .Matches(interfaceName))
                         {
                             interestedContracts.Add((child["name"] ?? throw new NullReferenceException()).Value<string>());

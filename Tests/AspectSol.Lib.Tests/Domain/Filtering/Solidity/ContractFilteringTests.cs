@@ -15,7 +15,7 @@ namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
         public void FilterContractsByContractName(string contractName)
         {
             var transformer = new Processors.ContractFiltering();
-            var result = transformer.FilterContractsByContractName(ParsedContract, contractName);
+            var result = transformer.FilterContractsByContractName(ContractAst, contractName);
 
             Assert.AreEqual(1, result.InterestedContracts.Count);
         }
@@ -24,7 +24,7 @@ namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
         public void FilterContractsByContractNameWildcard()
         {
             var transformer = new Processors.ContractFiltering();
-            var result = transformer.FilterContractsByContractName(ParsedContract, WildcardToken);
+            var result = transformer.FilterContractsByContractName(ContractAst, WildcardToken);
 
             Assert.AreEqual(TotalContracts, result.InterestedContracts.Count);
         }
@@ -33,7 +33,7 @@ namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
         public void FilterContractsByContractNameThrowsError()
         {
             var transformer = new Processors.ContractFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterContractsByContractName(ParsedContract, null));
+            Assert.Throws<ArgumentNullException>(() => transformer.FilterContractsByContractName(ContractAst, null));
         }
 
         [Test]
@@ -41,7 +41,7 @@ namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
         public void FilterContractsByInterfaceName(string interfaceName)
         {
             var transformer = new Processors.ContractFiltering();
-            var result = transformer.FilterContractsByInterfaceName(ParsedContract, interfaceName);
+            var result = transformer.FilterContractsByInterfaceName(ContractAst, interfaceName);
 
             Assert.AreEqual(1, result.InterestedContracts.Count);
         }
@@ -50,7 +50,7 @@ namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
         public void FilterContractsByInterfaceNameWildcard()
         {
             var transformer = new Processors.ContractFiltering();
-            var result = transformer.FilterContractsByInterfaceName(ParsedContract, WildcardToken);
+            var result = transformer.FilterContractsByInterfaceName(ContractAst, WildcardToken);
 
             Assert.AreEqual(TotalContractsImplementingInterfaces, result.InterestedContracts.Count);
         }
@@ -59,7 +59,7 @@ namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
         public void FilterContractsByInterfaceNameThrowsError()
         {
             var transformer = new Processors.ContractFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterContractsByInterfaceName(ParsedContract, null));
+            Assert.Throws<ArgumentNullException>(() => transformer.FilterContractsByInterfaceName(ContractAst, null));
         }
     }
 }
