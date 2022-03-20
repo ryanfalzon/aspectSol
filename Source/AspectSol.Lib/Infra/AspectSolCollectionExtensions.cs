@@ -1,6 +1,7 @@
 ﻿using AspectSol.Lib.App;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.Filtering.Solidity;
+using AspectSol.Lib.Domain.JavascriptExecution;
 using AspectSol.Lib.Domain.Parsing;
 using AspectSol.Lib.Domain.Tokenization;
 using Jering.Javascript.NodeJS;
@@ -19,7 +20,8 @@ public static class AspectSolCollectionExtensions
         services.AddScoped<IParser, Parser>();
 
         services.AddNodeJS();
-        services.Configure<NodeJSProcessOptions>(options => options.ProjectPath = AppDomain.CurrentDomain.BaseDirectory);
+        services.AddScoped<ScriptFactory>();
+        services.AddScoped<IJavascriptExecutor, JavascriptExecutor>();
 
         services.AddScoped<IContractFiltering, ContractFiltering>();
         services.AddScoped<IFunctionFiltering, FunctionFiltering>();

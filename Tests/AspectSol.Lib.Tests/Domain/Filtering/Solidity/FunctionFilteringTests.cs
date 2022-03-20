@@ -1,234 +1,233 @@
-﻿using NUnit.Framework;
+﻿using AspectSol.Lib.Domain.Filtering.Solidity;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Processors = AspectSol.Lib.Domain.Filtering.Solidity;
 
-namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
+namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity;
+
+[TestClass]
+public class FunctionFilteringTests : SolidityFilteringTests
 {
-    [TestFixture]
-    public class FunctionFilteringTests : SolidityFilteringTests
+    private const int TotalFunctions = 7;
+
+    [TestMethod]
+    [DataRow("store", 1)]
+    public void FilterFunctionsByFunctionName(string functionName, int expectedCount)
     {
-        private const int TotalFunctions = 7;
+        var transformer = new FunctionFiltering();
+        var result = transformer.FilterFunctionsByFunctionName(ContractAst, functionName);
 
-        [Test]
-        [TestCase("store", 1)]
-        public void FilterFunctionsByFunctionName(string functionName, int expectedCount)
-        {
-            var transformer = new Processors.FunctionFiltering();
-            var result = transformer.FilterFunctionsByFunctionName(ParsedContract, functionName);
+        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+    }
 
-            Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByFunctionNameWildcard()
+    {
+        var transformer = new FunctionFiltering();
+        var result = transformer.FilterFunctionsByFunctionName(ContractAst, WildcardToken);
 
-        [Test]
-        public void FilterFunctionsByFunctionNameWildcard()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            var result = transformer.FilterFunctionsByFunctionName(ParsedContract, WildcardToken);
+        Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
+    }
 
-            Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByFunctionNameThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByFunctionName(ContractAst, null));
+    }
 
-        [Test]
-        public void FilterFunctionsByFunctionNameThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByFunctionName(ParsedContract, null));
-        }
+    [TestMethod]
+    [DataRow("private", 3)]
+    [DataRow("public", 4)]
+    public void FilterFunctionsByVisibility(string visibility, int expectedCount)
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        [TestCase("private", 3)]
-        [TestCase("public", 4)]
-        public void FilterFunctionsByVisibility(string visibility, int expectedCount)
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result = transformer.FilterFunctionsByVisibility(ContractAst, visibility);
+        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+    }
 
-            var result = transformer.FilterFunctionsByVisibility(ParsedContract, visibility);
-            Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByVisibilityWildcard()
+    {
+        var transformer = new FunctionFiltering();
+        var result = transformer.FilterFunctionsByVisibility(ContractAst, WildcardToken);
 
-        [Test]
-        public void FilterFunctionsByVisibilityWildcard()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            var result = transformer.FilterFunctionsByVisibility(ParsedContract, WildcardToken);
+        Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
+    }
 
-            Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByVisibilityThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByVisibility(ContractAst, null));
+    }
 
-        [Test]
-        public void FilterFunctionsByVisibilityThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByVisibility(ParsedContract, null));
-        }
+    [TestMethod]
+    [DataRow("view", 3)]
+    public void FilterFunctionsByStateMutability(string mutability, int expectedCount)
+    {
+        var transformer = new FunctionFiltering();
+        var result = transformer.FilterFunctionsByStateMutability(ContractAst, mutability);
 
-        [Test]
-        [TestCase("pure", 2)]
-        public void FilterFunctionsByStateMutability(string mutability, int expectedCount)
-        {
-            var transformer = new Processors.FunctionFiltering();
-            var result = transformer.FilterFunctionsByStateMutability(ParsedContract, mutability);
+        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+    }
 
-            Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByStateMutabilityWildcard()
+    {
+        var transformer = new FunctionFiltering();
+        var result = transformer.FilterFunctionsByStateMutability(ContractAst, WildcardToken);
 
-        [Test]
-        public void FilterFunctionsByStateMutabilityWildcard()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            var result = transformer.FilterFunctionsByStateMutability(ParsedContract, WildcardToken);
+        Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
+    }
 
-            Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByStateMutabilityThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByStateMutability(ContractAst, null));
+    }
 
-        [Test]
-        public void FilterFunctionsByStateMutabilityThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByStateMutability(ParsedContract, null));
-        }
+    [TestMethod]
+    [DataRow(1, "onlyOwner")]
+    [DataRow(0, "invalidModifier")]
+    public void FilterFunctionsByAllModifiers(int expectedCount, params string[] modifiers)
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        [TestCase(1, "onlyOwner")]
-        [TestCase(0, "invalidModifier")]
-        public void FilterFunctionsByAllModifiers(int expectedCount, params string[] modifiers)
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result = transformer.FilterFunctionsByAllModifiers(ContractAst, modifiers.ToList());
+        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+    }
 
-            var result = transformer.FilterFunctionsByAllModifiers(ParsedContract, modifiers.ToList());
-            Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByAllModifiersThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByAllModifiers(ContractAst, null));
+    }
 
-        [Test]
-        public void FilterFunctionsByAllModifiersThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByAllModifiers(ParsedContract, null));
-        }
+    [TestMethod]
+    [DataRow(1, "onlyOwner", "onlyAdmins")]
+    [DataRow(0, "invalidModifier")]
+    public void FilterFunctionsByEitherModifiers(int expectedCount, params string[] modifiers)
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        [TestCase(1, "onlyOwner", "onlyAdmins")]
-        [TestCase(0, "invalidModifier")]
-        public void FilterFunctionsByEitherModifiers(int expectedCount, params string[] modifiers)
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result = transformer.FilterFunctionsByEitherModifiers(ContractAst, modifiers.ToList());
+        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+    }
 
-            var result = transformer.FilterFunctionsByEitherModifiers(ParsedContract, modifiers.ToList());
-            Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByEitherModifiersThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByEitherModifiers(ContractAst, null));
+    }
 
-        [Test]
-        public void FilterFunctionsByEitherModifiersThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByEitherModifiers(ParsedContract, null));
-        }
+    [TestMethod]
+    [DataRow(1, "onlyOwner", false)]
+    [DataRow(6, "onlyOwner", true)]
+    public void FilterFunctionsByModifier(int expectedCount, string modifier, bool invert)
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        [TestCase(1, "onlyOwner", false)]
-        [TestCase(6, "onlyOwner", true)]
-        public void FilterFunctionsByModifier(int expectedCount, string modifier, bool invert)
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result = transformer.FilterFunctionsByModifier(ContractAst, modifier, invert);
+        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+    }
 
-            var result = transformer.FilterFunctionsByModifier(ParsedContract, modifier, invert);
-            Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByModifierThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByModifier(ContractAst, null, false));
+    }
 
-        [Test]
-        public void FilterFunctionsByModifierThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByModifier(ParsedContract, null, false));
-        }
+    [TestMethod]
+    public void FilterFunctionsByParameters()
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        public void FilterFunctionsByParameters()
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result1 = transformer.FilterFunctionsByParameters(ContractAst, "uint256", "num");
+        Assert.AreEqual(2, result1.InterestedFunctions.Count);
 
-            var result1 = transformer.FilterFunctionsByParameters(ParsedContract, "uint256", "num");
-            Assert.AreEqual(2, result1.InterestedFunctions.Count);
+        var result2 = transformer.FilterFunctionsByParameters(ContractAst, new List<(string Type, string Value)> { ("uint256", "num") });
+        Assert.AreEqual(2, result2.InterestedFunctions.Count);
 
-            var result2 = transformer.FilterFunctionsByParameters(ParsedContract, new List<(string Type, string Value)> { ("uint256", "num") });
-            Assert.AreEqual(2, result2.InterestedFunctions.Count);
+        var result3 = transformer.FilterFunctionsByParameters(ContractAst, new List<(string Type, string Value)> { ("uint128", "anotherNum") });
+        Assert.AreEqual(0, result3.InterestedFunctions.Count);
+    }
 
-            var result3 = transformer.FilterFunctionsByParameters(ParsedContract, new List<(string Type, string Value)> { ("uint128", "anotherNum") });
-            Assert.AreEqual(0, result3.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByParametersThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByParameters(ContractAst, null, "num"));
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByParameters(ContractAst, "uint256", null));
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByParameters(ContractAst, null));
+    }
 
-        [Test]
-        public void FilterFunctionsByParametersThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByParameters(ParsedContract, null, "num"));
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByParameters(ParsedContract, "uint256", null));
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByParameters(ParsedContract, null));
-        }
+    [TestMethod]
+    public void FilterFunctionsByReturnParameters()
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        public void FilterFunctionsByReturnParameters()
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result1 = transformer.FilterFunctionsByReturnParameters(ContractAst, "address");
+        Assert.AreEqual(0, result1.InterestedFunctions.Count);
 
-            var result1 = transformer.FilterFunctionsByReturnParameters(ParsedContract, "address");
-            Assert.AreEqual(0, result1.InterestedFunctions.Count);
+        var result2 = transformer.FilterFunctionsByReturnParameters(ContractAst, "uint256");
+        Assert.AreEqual(4, result2.InterestedFunctions.Count);
 
-            var result2 = transformer.FilterFunctionsByReturnParameters(ParsedContract, "uint256");
-            Assert.AreEqual(4, result2.InterestedFunctions.Count);
+        var result3 = transformer.FilterFunctionsByReturnParameters(ContractAst, new List<string> { "bool" });
+        Assert.AreEqual(1, result3.InterestedFunctions.Count);
+    }
 
-            var result3 = transformer.FilterFunctionsByReturnParameters(ParsedContract, new List<string> { "bool" });
-            Assert.AreEqual(1, result3.InterestedFunctions.Count);
-        }
+    [TestMethod]
+    public void FilterFunctionsByReturnParametersThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByReturnParameters(ContractAst, returnParameter: null));
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsByReturnParameters(ContractAst, returnParameters: null));
+    }
 
-        [Test]
-        public void FilterFunctionsByReturnParametersThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByReturnParameters(ParsedContract, returnParameter: null));
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsByReturnParameters(ParsedContract, returnParameters: null));
-        }
+    [TestMethod]
+    [DataRow("storageA", "store", 1)]
+    [DataRow("storageA", "someOtherFunction", 0)]
+    public void FilterFunctionCallsByInstanceName(string instanceName, string functionName, int expectedCount)
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        [TestCase("storageA", "store", 1)]
-        [TestCase("storageA", "someOtherFunction", 0)]
-        public void FilterFunctionCallsByInstanceName(string instanceName, string functionName, int expectedCount)
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result = transformer.FilterFunctionCallsByInstanceName(ContractAst, instanceName, functionName);
+        Assert.AreEqual(expectedCount, result.InterestedStatements.Count);
+    }
 
-            var result = transformer.FilterFunctionCallsByInstanceName(ParsedContract, instanceName, functionName);
-            Assert.AreEqual(expectedCount, result.InterestedStatements.Count);
-        }
+    [TestMethod]
+    [DataRow(null, "store")]
+    [DataRow("storageA", null)]
+    public void FilterFunctionCallsByInstanceNameThrowsError(string instanceName, string functionName)
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionCallsByInstanceName(ContractAst, instanceName, functionName));
+    }
 
-        [Test]
-        [TestCase(null, "store")]
-        [TestCase("storageA", null)]
-        public void FilterFunctionCallsByInstanceNameThrowsError(string instanceName, string functionName)
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionCallsByInstanceName(ParsedContract, instanceName, functionName));
-        }
+    [TestMethod]
+    [DataRow("Space")]
+    public void FilterFunctionsImplementedFromInterface(string interfaceName)
+    {
+        var transformer = new FunctionFiltering();
 
-        [Test]
-        [TestCase("Space")]
-        public void FilterFunctionsImplementedFromInterface(string interfaceName)
-        {
-            var transformer = new Processors.FunctionFiltering();
+        var result1 = transformer.FilterFunctionsImplementedFromInterface(ContractAst, interfaceName, false);
+        Assert.AreEqual(2, result1.InterestedFunctions.Count);
 
-            var result1 = transformer.FilterFunctionsImplementedFromInterface(ParsedContract, interfaceName, false);
-            Assert.AreEqual(2, result1.InterestedFunctions.Count);
+        var result2 = transformer.FilterFunctionsImplementedFromInterface(ContractAst, interfaceName, true);
+        Assert.AreEqual(5, result2.InterestedFunctions.Count);
+    }
 
-            var result2 = transformer.FilterFunctionsImplementedFromInterface(ParsedContract, interfaceName, true);
-            Assert.AreEqual(5, result2.InterestedFunctions.Count);
-        }
-
-        [Test]
-        public void FilterFunctionsImplementedFromInterfaceThrowsError()
-        {
-            var transformer = new Processors.FunctionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterFunctionsImplementedFromInterface(ParsedContract, null, false));
-        }
+    [TestMethod]
+    public void FilterFunctionsImplementedFromInterfaceThrowsError()
+    {
+        var transformer = new FunctionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterFunctionsImplementedFromInterface(ContractAst, null, false));
     }
 }

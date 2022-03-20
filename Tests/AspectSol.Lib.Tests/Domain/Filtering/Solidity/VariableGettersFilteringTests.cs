@@ -1,91 +1,91 @@
-﻿using NUnit.Framework;
-using System;
-using Processors = AspectSol.Lib.Domain.Filtering.Solidity;
+﻿using System;
+using AspectSol.Lib.Domain.Filtering.Solidity;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
+namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity;
+
+[TestClass]
+public class VariableGettersFilteringTests : SolidityFilteringTests
 {
-    public class VariableGettersFilteringTests : SolidityFilteringTests
+    [TestMethod]
+    [DataRow("numberB", 14)]
+    public void FilterVariableGettersByVariableName(string variableName, int expectedCount)
     {
-        [Test]
-        [TestCase("numberB", 13)]
-        public void FilterVariableGettersByVariableName(string variableName, int expectedCount)
-        {
-            var transformer = new Processors.VariableGettersFiltering();
+        var transformer = new VariableGettersFiltering();
 
-            var result1 = transformer.FilterVariableInteractionByVariableName(ParsedContract, variableName);
-            Assert.AreEqual(expectedCount, result1.InterestedStatements.Count);
-        }
+        var result1 = transformer.FilterVariableInteractionByVariableName(ContractAst, variableName);
+        Assert.AreEqual(expectedCount, result1.InterestedStatements.Count);
+    }
 
-        [Test]
-        public void FilterVariableGettersByVariableNameWildcard()
-        {
-            var transformer = new Processors.VariableGettersFiltering();
+    [TestMethod]
+    public void FilterVariableGettersByVariableNameWildcard()
+    {
+        var transformer = new VariableGettersFiltering();
 
-            var result = transformer.FilterVariableInteractionByVariableName(ParsedContract, WildcardToken);
-            Assert.AreEqual(20, result.InterestedStatements.Count);
-        }
+        var result = transformer.FilterVariableInteractionByVariableName(ContractAst, WildcardToken);
+        Assert.AreEqual(21, result.InterestedStatements.Count);
+    }
 
-        [Test]
-        public void FilterVariableGettersByVariableNameThrowsError()
-        {
-            var transformer = new Processors.VariableGettersFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterVariableInteractionByVariableName(ParsedContract, null));
-        }
+    [TestMethod]
+    public void FilterVariableGettersByVariableNameThrowsError()
+    {
+        var transformer = new VariableGettersFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterVariableInteractionByVariableName(ContractAst, null));
+    }
 
-        [Test]
-        [TestCase("uint256", 14)]
-        public void FilterVariableGettersByVariableType(string variableType, int expectedCount)
-        {
-            var transformer = new Processors.VariableGettersFiltering();
-            transformer.LoadLocals(ParsedContract);
+    [TestMethod]
+    [DataRow("uint256", 15)]
+    public void FilterVariableGettersByVariableType(string variableType, int expectedCount)
+    {
+        var transformer = new VariableGettersFiltering();
+        transformer.LoadLocals(ContractAst);
 
-            var result1 = transformer.FilterVariableInteractionByVariableType(ParsedContract, variableType);
-            Assert.AreEqual(expectedCount, result1.InterestedStatements.Count);
-        }
+        var result1 = transformer.FilterVariableInteractionByVariableType(ContractAst, variableType);
+        Assert.AreEqual(expectedCount, result1.InterestedStatements.Count);
+    }
 
-        [Test]
-        public void FilterVariableGettersByVariableTypeWildcard()
-        {
-            var transformer = new Processors.VariableGettersFiltering();
-            transformer.LoadLocals(ParsedContract);
+    [TestMethod]
+    public void FilterVariableGettersByVariableTypeWildcard()
+    {
+        var transformer = new VariableGettersFiltering();
+        transformer.LoadLocals(ContractAst);
 
-            var result = transformer.FilterVariableInteractionByVariableType(ParsedContract, WildcardToken);
-            Assert.AreEqual(20, result.InterestedStatements.Count);
-        }
+        var result = transformer.FilterVariableInteractionByVariableType(ContractAst, WildcardToken);
+        Assert.AreEqual(21, result.InterestedStatements.Count);
+    }
 
-        [Test]
-        public void FilterVariableGettersByVariableTypeThrowsError()
-        {
-            var transformer = new Processors.VariableGettersFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterVariableInteractionByVariableType(ParsedContract, null));
-        }
+    [TestMethod]
+    public void FilterVariableGettersByVariableTypeThrowsError()
+    {
+        var transformer = new VariableGettersFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterVariableInteractionByVariableType(ContractAst, null));
+    }
 
-        [Test]
-        [TestCase("public", 13)]
-        public void FilterVariableGettersByVariableVisibility(string variableVisibility, int expectedCount)
-        {
-            var transformer = new Processors.VariableGettersFiltering();
-            transformer.LoadLocals(ParsedContract);
+    [TestMethod]
+    [DataRow("public", 13)]
+    public void FilterVariableGettersByVariableVisibility(string variableVisibility, int expectedCount)
+    {
+        var transformer = new VariableGettersFiltering();
+        transformer.LoadLocals(ContractAst);
 
-            var result1 = transformer.FilterVariableInteractionByVariableVisibility(ParsedContract, variableVisibility);
-            Assert.AreEqual(expectedCount, result1.InterestedStatements.Count);
-        }
+        var result1 = transformer.FilterVariableInteractionByVariableVisibility(ContractAst, variableVisibility);
+        Assert.AreEqual(expectedCount, result1.InterestedStatements.Count);
+    }
 
-        [Test]
-        public void FilterVariableGettersByVariableVisibilityWildcard()
-        {
-            var transformer = new Processors.VariableGettersFiltering();
-            transformer.LoadLocals(ParsedContract);
+    [TestMethod]
+    public void FilterVariableGettersByVariableVisibilityWildcard()
+    {
+        var transformer = new VariableGettersFiltering();
+        transformer.LoadLocals(ContractAst);
 
-            var result = transformer.FilterVariableInteractionByVariableVisibility(ParsedContract, WildcardToken);
-            Assert.AreEqual(20, result.InterestedStatements.Count);
-        }
+        var result = transformer.FilterVariableInteractionByVariableVisibility(ContractAst, WildcardToken);
+        Assert.AreEqual(21, result.InterestedStatements.Count);
+    }
 
-        [Test]
-        public void FilterVariableGettersByVariableVisibilityThrowsError()
-        {
-            var transformer = new Processors.VariableGettersFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterVariableInteractionByVariableVisibility(ParsedContract, null));
-        }
+    [TestMethod]
+    public void FilterVariableGettersByVariableVisibilityThrowsError()
+    {
+        var transformer = new VariableGettersFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterVariableInteractionByVariableVisibility(ContractAst, null));
     }
 }

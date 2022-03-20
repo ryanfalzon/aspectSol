@@ -8,7 +8,7 @@ public class VariableDefinitionFiltering : IVariableDefinitionFiltering
     private const string Wildcard = "*";
     private const string ContractDefinition = "ContractDefinition";
     private const string VariableDeclaration = "VariableDeclaration";
-    private const string StateVariableDeclaration = "StateVariableDeclaration";
+    private const string StateVariableDeclaration = "VariableDeclaration";
 
     /// <summary>
     /// Filter variable definitions found in jToken by their type
@@ -24,24 +24,20 @@ public class VariableDefinitionFiltering : IVariableDefinitionFiltering
 
         var interestedDefinitions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
-        foreach (var child in children.Children())
+        if (jToken["nodes"] is JArray children)
         {
-            if (child["type"].Matches(ContractDefinition))
+            foreach (var child in children.Children())
             {
-                var subNodes = child["subNodes"].ToSafeList();
-
-                foreach (var subNode in subNodes)
+                if (child["nodeType"].Matches(ContractDefinition))
                 {
-                    if (subNode["type"].Matches(StateVariableDeclaration))
+                    var subNodes = child["nodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
                     {
-                        var variables = subNode["variables"].ToSafeList();
-                        foreach (var variable in variables)
+                        if (subNode["nodeType"].Matches(VariableDeclaration) &&
+                            (variableType.Equals(Wildcard) || subNode["typeDescriptions"]["typeString"].Matches(variableType)))
                         {
-                            if (variable["type"].Matches(VariableDeclaration) && (variableType.Equals(Wildcard) || variable["typeName"]["name"].Matches(variableType)))
-                            {
-                                interestedDefinitions.Add(variable["name"].Value<string>(), child["name"].Value<string>());
-                            }
+                            interestedDefinitions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
                         }
                     }
                 }
@@ -68,24 +64,20 @@ public class VariableDefinitionFiltering : IVariableDefinitionFiltering
 
         var interestedDefinitions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
-        foreach (var child in children.Children())
+        if (jToken["nodes"] is JArray children)
         {
-            if (child["type"].Matches(ContractDefinition))
+            foreach (var child in children.Children())
             {
-                var subNodes = child["subNodes"].ToSafeList();
-
-                foreach (var subNode in subNodes)
+                if (child["nodeType"].Matches(ContractDefinition))
                 {
-                    if (subNode["type"].Matches(StateVariableDeclaration))
+                    var subNodes = child["nodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
                     {
-                        var variables = subNode["variables"].ToSafeList();
-                        foreach (var variable in variables)
+                        if (subNode["nodeType"].Matches(VariableDeclaration) &&
+                            (variableName.Equals(Wildcard) || subNode["name"].Matches(variableName)))
                         {
-                            if (variable["type"].Matches(VariableDeclaration) && (variableName.Equals(Wildcard) || variable["name"].Matches(variableName)))
-                            {
-                                interestedDefinitions.Add(variable["name"].Value<string>(), child["name"].Value<string>());
-                            }
+                            interestedDefinitions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
                         }
                     }
                 }

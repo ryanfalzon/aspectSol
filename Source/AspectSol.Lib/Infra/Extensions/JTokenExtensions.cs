@@ -21,7 +21,7 @@ public static class JTokenExtensions
 
     public static bool IsValueNullOrWhitespace(this JToken jToken)
     {
-        return jToken.HasValues;
+        return jToken is not {HasValues: true};
     }
 
     public static List<JToken> ToSafeList(this JToken jToken)

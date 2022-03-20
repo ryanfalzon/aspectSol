@@ -26,16 +26,16 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse() && (functionName.Equals(Wildcard) || subNode["name"].Matches(functionName)))
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") && (functionName.Equals(Wildcard) || subNode["name"].Matches(functionName)))
                     {
                         interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
                     }
@@ -63,16 +63,16 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse() && (visibility.Equals(Wildcard) || subNode["visibility"].Matches(visibility)))
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") && (visibility.Equals(Wildcard) || subNode["visibility"].Matches(visibility)))
                     {
                         interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
                     }
@@ -100,16 +100,16 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse() && (stateMutability.Equals(Wildcard) || subNode["stateMutability"].Matches(stateMutability)))
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") && (stateMutability.Equals(Wildcard) || subNode["stateMutability"].Matches(stateMutability)))
                     {
                         interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
                     }
@@ -137,23 +137,23 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
                         var functionModifiers = subNode["modifiers"].ToSafeList();
 
                         bool allMatch = true;
                         foreach (var modifier in modifiers)
                         {
-                            allMatch = functionModifiers.Exists(functionModifier => functionModifier["name"].Matches(modifier));
+                            allMatch = functionModifiers.Exists(functionModifier => functionModifier["modifierName"]["name"].Matches(modifier));
 
                             if (!allMatch)
                             {
@@ -190,23 +190,23 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
                         var functionModifiers = subNode["modifiers"].ToSafeList();
 
                         bool foundMatch = false;
                         foreach (var modifier in modifiers)
                         {
-                            foundMatch = functionModifiers.Exists(functionModifier => functionModifier["name"].Matches(modifier));
+                            foundMatch = functionModifiers.Exists(functionModifier => functionModifier["modifierName"]["name"].Matches(modifier));
 
                             if (foundMatch)
                             {
@@ -244,16 +244,16 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
                         var functionModifiers = subNode["modifiers"].ToSafeList();
 
@@ -266,7 +266,7 @@ public class FunctionFiltering : IFunctionFiltering
                         {
                             foreach (var functionModifier in functionModifiers)
                             {
-                                foundMatch = invert ^ functionModifier["name"].Matches(modifier);
+                                foundMatch = invert ^ functionModifier["modifierName"]["name"].Matches(modifier);
 
                                 if (foundMatch)
                                 {
@@ -307,24 +307,24 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionParameters = subNode["parameters"].ToSafeList();
+                        var functionParameters = subNode["parameters"]["parameters"].ToSafeList();
 
                         bool isMatch = false;
                         foreach (var functionParameter in functionParameters)
                         {
-                            if (functionParameter["type"].Matches(VariableDeclaration) &&
-                                functionParameter["typeName"]["name"].Matches(parameterType) && functionParameter["identifier"]["name"].Matches(parameterName))
+                            if (functionParameter["nodeType"].Matches(VariableDeclaration) &&
+                                functionParameter["typeName"]["name"].Matches(parameterType) && functionParameter["name"].Matches(parameterName))
                             {
                                 isMatch = true;
                             }
@@ -359,26 +359,26 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionParameters = subNode["parameters"].ToSafeList();
+                        var functionParameters = subNode["parameters"]["parameters"].ToSafeList();
 
                         bool isMatch = functionParameters.Count > 0;
                         foreach (var functionParameter in functionParameters)
                         {
-                            if (functionParameter["type"].Matches(VariableDeclaration))
+                            if (functionParameter["nodeType"].Matches(VariableDeclaration))
                             {
                                 isMatch = parameters.Exists(parameter =>
-                                    functionParameter["typeName"]["name"].Matches(parameter.Type) && functionParameter["identifier"]["name"].Matches(parameter.Value));
+                                    functionParameter["typeName"]["name"].Matches(parameter.Type) && functionParameter["name"].Matches(parameter.Value));
 
                                 if (!isMatch)
                                 {
@@ -416,23 +416,23 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionReturnParameters = subNode["returnParameters"].ToSafeList();
+                        var functionReturnParameters = subNode["returnParameters"]["parameters"].ToSafeList();
 
                         bool isMatch = false;
                         foreach (var functionReturnParameter in functionReturnParameters)
                         {
-                            if (functionReturnParameter["type"].Matches(VariableDeclaration) && functionReturnParameter["typeName"]["name"].Matches(returnParameter))
+                            if (functionReturnParameter["nodeType"].Matches(VariableDeclaration) && functionReturnParameter["typeName"]["name"].Matches(returnParameter))
                             {
                                 isMatch = true;
                             }
@@ -467,23 +467,23 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionReturnParameters = subNode["returnParameters"].ToSafeList();
+                        var functionReturnParameters = subNode["returnParameters"]["parameters"].ToSafeList();
 
                         var functionReturnParametersList = new List<string>();
                         foreach (var functionReturnParameter in functionReturnParameters)
                         {
-                            if (functionReturnParameter["type"].Matches(VariableDeclaration))
+                            if (functionReturnParameter["nodeType"].Matches(VariableDeclaration))
                             {
                                 functionReturnParametersList.Add(functionReturnParameter["typeName"]["name"].Value<string>());
                             }
@@ -521,26 +521,26 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
 
         var childPosition = 0;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
                         var statements = subNode["body"]["statements"].ToSafeList();
 
                         var statementPosition = 0;
                         foreach (var statement in statements)
                         {
-                            if (statement["type"].Matches(ExpressionStatement) && statement["expression"]["type"].Matches(FunctionCall)
+                            if (statement["nodeType"].Matches(ExpressionStatement) && statement["expression"]["nodeType"].Matches(FunctionCall)
                                                                                && statement["expression"]["expression"]["expression"]["name"].Matches(instanceName)
                                                                                && statement["expression"]["expression"]["memberName"].Matches(functionName))
                             {
@@ -579,18 +579,18 @@ public class FunctionFiltering : IFunctionFiltering
 
         var interestedFunctions = new Dictionary<string, string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
 
         var interfaceFunctions = new List<string>();
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && child["kind"].Matches("interface") && child["name"].Matches(interfaceName))
+            if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("interface") && child["name"].Matches(interfaceName))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
                         interfaceFunctions.Add(subNode["name"].ToString());
                     }
@@ -600,13 +600,13 @@ public class FunctionFiltering : IFunctionFiltering
 
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse() &&
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
                         invert ^ interfaceFunctions.Contains(subNode["name"].ToString()))
                     {
                         interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());

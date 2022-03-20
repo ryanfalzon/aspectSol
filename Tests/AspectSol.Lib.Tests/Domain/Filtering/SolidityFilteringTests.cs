@@ -3,11 +3,10 @@ using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 
 namespace AspectSol.Lib.Tests.Domain.Filtering;
 
-public class SolidityFilteringTests
+public abstract class SolidityFilteringTests
 {
     protected const string WildcardToken = "*";
 
@@ -16,17 +15,17 @@ public class SolidityFilteringTests
 
     protected SolidityFilteringTests()
     {
-        var serviceCollection = new ServiceCollection();
-        serviceCollection.AddNodeJS();
-        serviceCollection.Configure<NodeJSProcessOptions>(options => options.ProjectPath = AppDomain.CurrentDomain.BaseDirectory);
+        var services = new ServiceCollection();
 
-        var serviceProvider = serviceCollection.BuildServiceProvider();
-        var nodeJsService = serviceProvider.GetRequiredService<INodeJSService>();
-        var scriptFactory = new ScriptFactory();
+        services.AddNodeJS();
+        services.AddScoped<ScriptFactory>();
+        services.AddScoped<IJavascriptExecutor, JavascriptExecutor>();
 
-        var javascriptExecutor = new JavascriptExecutor(nodeJsService, scriptFactory);
-        var response = javascriptExecutor.Execute("generateAst", new object[] { "Resources/SampleSmartContract.sol" }).Result;
-        var deserializedResponse = JsonConvert.DeserializeObject<JavascriptResponse>(response);
+        var serviceProvider = services.BuildServiceProvider();
+        var service = serviceProvider.GetService<IJavascriptExecutor>();
+
+        var response = service?.Execute("generateAst", new object[] { "Resources/SampleSmartContract.sol" }).Result;
+        var deserializedResponse = JsonConvert.DeserializeObject<JavascriptResponse>(response ?? string.Empty);
 
         ParsedContract = JToken.Parse(deserializedResponse?.Data ?? string.Empty);
         ContractAst = ParsedContract["sources"]?.First?.First?["ast"];

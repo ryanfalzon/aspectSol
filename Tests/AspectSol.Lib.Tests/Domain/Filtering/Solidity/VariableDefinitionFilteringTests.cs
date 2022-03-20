@@ -1,64 +1,64 @@
-﻿using NUnit.Framework;
-using System;
-using Processors = AspectSol.Lib.Domain.Filtering.Solidity;
+﻿using System;
+using AspectSol.Lib.Domain.Filtering.Solidity;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity
+namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity;
+
+[TestClass]
+public class VariableDefinitionFilteringTests : SolidityFilteringTests
 {
-    public class VariableDefinitionFilteringTests : SolidityFilteringTests
+    private const int TotalVariableDefinitions = 4;
+
+    [TestMethod]
+    [DataRow("address", 1)]
+    public void FilterVariableDefinitionByVariableType(string variableType, int expectedCount)
     {
-        private const int TotalVariableDefinitions = 4;
+        var transformer = new VariableDefinitionFiltering();
+        var result = transformer.FilterVariableDefinitionByVariableType(ContractAst, variableType);
 
-        [Test]
-        [TestCase("address", 1)]
-        public void FilterVariableDefinitionByVariableType(string variableType, int expectedCount)
-        {
-            var transformer = new Processors.VariableDefinitionFiltering();
-            var result = transformer.FilterVariableDefinitionByVariableType(ParsedContract, variableType);
+        Assert.AreEqual(expectedCount, result.InterestedDefinitions.Count);
+    }
 
-            Assert.AreEqual(expectedCount, result.InterestedDefinitions.Count);
-        }
+    [TestMethod]
+    public void FilterVariableDefinitionByVariableTypeWildcard()
+    {
+        var transformer = new VariableDefinitionFiltering();
+        var result = transformer.FilterVariableDefinitionByVariableType(ContractAst, WildcardToken);
 
-        [Test]
-        public void FilterVariableDefinitionByVariableTypeWildcard()
-        {
-            var transformer = new Processors.VariableDefinitionFiltering();
-            var result = transformer.FilterVariableDefinitionByVariableType(ParsedContract, WildcardToken);
+        Assert.AreEqual(TotalVariableDefinitions, result.InterestedDefinitions.Count);
+    }
 
-            Assert.AreEqual(TotalVariableDefinitions, result.InterestedDefinitions.Count);
-        }
+    [TestMethod]
+    public void FilterVariableDefinitionByVariableTypeThrowsError()
+    {
+        var transformer = new VariableDefinitionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterVariableDefinitionByVariableType(ContractAst, null));
+    }
 
-        [Test]
-        public void FilterVariableDefinitionByVariableTypeThrowsError()
-        {
-            var transformer = new Processors.VariableDefinitionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterVariableDefinitionByVariableType(ParsedContract, null));
-        }
+    [TestMethod]
+    [DataRow("someAddress", 1)]
+    [DataRow("someOtherAddress", 0)]
+    public void FilterVariableDefinitionByVariableName(string variableName, int expectedCount)
+    {
+        var transformer = new VariableDefinitionFiltering();
 
-        [Test]
-        [TestCase("someAddress", 1)]
-        [TestCase("someOtherAddress", 0)]
-        public void FilterVariableDefinitionByVariableName(string variableName, int expectedCount)
-        {
-            var transformer = new Processors.VariableDefinitionFiltering();
+        var result = transformer.FilterVariableDefinitionByVariableName(ContractAst, variableName);
+        Assert.AreEqual(expectedCount, result.InterestedDefinitions.Count);
+    }
 
-            var result = transformer.FilterVariableDefinitionByVariableName(ParsedContract, variableName);
-            Assert.AreEqual(expectedCount, result.InterestedDefinitions.Count);
-        }
+    [TestMethod]
+    public void FilterVariableDefinitionByVariableNameWildcard()
+    {
+        var transformer = new VariableDefinitionFiltering();
+        var result = transformer.FilterVariableDefinitionByVariableName(ContractAst, WildcardToken);
 
-        [Test]
-        public void FilterVariableDefinitionByVariableNameWildcard()
-        {
-            var transformer = new Processors.VariableDefinitionFiltering();
-            var result = transformer.FilterVariableDefinitionByVariableName(ParsedContract, WildcardToken);
+        Assert.AreEqual(TotalVariableDefinitions, result.InterestedDefinitions.Count);
+    }
 
-            Assert.AreEqual(TotalVariableDefinitions, result.InterestedDefinitions.Count);
-        }
-
-        [Test]
-        public void FilterVariableDefinitionByVariableNameThrowsError()
-        {
-            var transformer = new Processors.VariableDefinitionFiltering();
-            Assert.Throws<ArgumentNullException>(() => transformer.FilterVariableDefinitionByVariableName(ParsedContract, null));
-        }
+    [TestMethod]
+    public void FilterVariableDefinitionByVariableNameThrowsError()
+    {
+        var transformer = new VariableDefinitionFiltering();
+        Assert.ThrowsException<ArgumentNullException>(() => transformer.FilterVariableDefinitionByVariableName(ContractAst, null));
     }
 }

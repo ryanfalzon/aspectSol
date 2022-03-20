@@ -1,19 +1,19 @@
-﻿pragma solidity >=0.7.0 <0.9.0;
+pragma solidity >=0.7.0 <0.9.0;
 
 interface Space {
-    function store(uint256 num) public;
-    function retrieve() public view returns(uint256);
+    function store(uint256 num) external;
+    function retrieve() external view returns(uint256);
 }
 
 contract StorageA is Space {
 
     uint256 numberA;
 
-    function store(uint256 num) public {
+    function store(uint256 num) public override {
         numberA = num;
     }
 
-    function retrieve() public view returns (uint256){
+    function retrieve() public override view returns (uint256){
         return numberA;
     }
 }
@@ -24,6 +24,10 @@ contract StorageB {
     address someAddress;
     StorageA storageA;
 
+    constructor() public {
+        someAddress = msg.sender;
+    }
+
     function storeAnother(uint256 num) public {
         numberB = num;
     }
@@ -32,11 +36,11 @@ contract StorageB {
         return numberB;
     }
 
-    function add(uint256 number1, uint256 number2) private pure onlyOwner returns (uint256) {
+    function add(uint256 number1, uint256 number2) private view onlyOwner returns (uint256) {
         return number1 + number2;
     }
 
-    function areEqual(uint256 number1, uint256 number2) private pure returns (bool, uint256) {
+    function areEqual(uint256 number1, uint256 number2) private returns (bool, uint256) {
         if(numberB == number1){
             numberB = number1;
         }
@@ -57,18 +61,18 @@ contract StorageB {
         }
 
         bool test = numberB == number2;
-        uint256 anotherTest = number;
+        uint256 anotherTest = numberB;
 
         return (test, numberB);
     }
 
-    function storeInStorageA() private view returns (bool) {
+    function storeInStorageA() private returns (bool) {
         storageA.store(numberB);
         return true;
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == someAddress);
         _;
     }
 }

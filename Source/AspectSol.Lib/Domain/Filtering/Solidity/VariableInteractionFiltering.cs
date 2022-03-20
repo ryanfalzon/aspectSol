@@ -8,12 +8,14 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
     protected const string ContractDefinition = "ContractDefinition";
     protected const string Wildcard = "*";
     protected const string FunctionDefinition = "FunctionDefinition";
+    protected const string ModifierDefinition = "ModifierDefinition";
     protected const string ExpressionStatement = "ExpressionStatement";
-    protected const string ReturnStatement = "ReturnStatement";
-    protected const string VariableDeclarationStatement = "VariableDeclarationStatement";
+    protected const string Return = "Return";
     protected const string VariableDeclaration = "VariableDeclaration";
+    protected const string VariableDeclarationStatement = "VariableDeclarationStatement";
     protected const string FunctionCall = "FunctionCall";
     protected const string BinaryOperation = "BinaryOperation";
+    protected const string Assignment = "Assignment";
     protected const string IfStatement = "IfStatement";
     protected const string TupleExpression = "TupleExpression";
     protected const string Identifier = "Identifier";
@@ -75,19 +77,20 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
 
         var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
 
         var childPosition = 0;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && (subNode["kind"].Matches("function") || subNode["kind"].Matches("constructor")) ||
+                        subNode["nodeType"].Matches(ModifierDefinition))
                     {
                         var statements = subNode["body"]?["statements"].ToSafeList();
                         foreach (var (key, value) in CheckStatementsForVariableName(statements, variableName, childPosition, subNode["name"].Value<string>(), subNodePosition))
@@ -123,19 +126,20 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
 
         var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
 
         var childPosition = 0;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && (subNode["kind"].Matches("function") || subNode["kind"].Matches("constructor")) ||
+                        subNode["nodeType"].Matches(ModifierDefinition))
                     {
                         var statements = subNode["body"]?["statements"].ToSafeList();
                         foreach (var (key, value) in CheckStatementsForVariableType(statements, variableType, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
@@ -171,19 +175,20 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
 
         var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
 
-        var children = jToken["children"] as JArray;
+        var children = jToken["nodes"] as JArray;
 
         var childPosition = 0;
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(FunctionDefinition) && subNode["isConstructor"].IsFalse())
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && (subNode["kind"].Matches("function") || subNode["kind"].Matches("constructor")) ||
+                        subNode["nodeType"].Matches(ModifierDefinition))
                     {
                         var statements = subNode["body"]?["statements"].ToSafeList();
                         foreach (var (key, value) in CheckStatementsForVariableVisibility(statements, variableVisibility, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
@@ -219,29 +224,24 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
 
     public void LoadLocals(JToken source)
     {
-        var children = source["children"] as JArray;
+        var children = source["nodes"] as JArray;
 
         foreach (var child in children.Children())
         {
-            if (child["type"].Matches(ContractDefinition) && !child["kind"].Matches("interface"))
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var contractName = child["name"].ToString();
-                var subNodes = child["subNodes"].ToSafeList();
+                var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["type"].Matches(StateVariableDeclaration))
+                    if (subNode["nodeType"].Matches(VariableDeclaration))
                     {
-                        var variables = subNode["variables"].ToSafeList();
+                        var variableName = subNode["name"].Value<string>();
+                        var variableType = subNode["typeDescriptions"]["typeString"].Value<string>();
+                        var variableVisibility = subNode["visibility"].Value<string>();
 
-                        foreach (var variable in variables)
-                        {
-                            var variableName = variable["name"].ToString();
-                            var variableType = variable["typeName"]["name"] == null ? variable["typeName"]["namePath"].ToString() : variable["typeName"]["name"].ToString();
-                            var variableVisibility = variable["visibility"].ToString();
-
-                            Locals.Add((contractName, variableName), (variableType, variableVisibility));
-                        }
+                        Locals.Add((contractName, variableName), (variableType, variableVisibility));
                     }
                 }
             }
