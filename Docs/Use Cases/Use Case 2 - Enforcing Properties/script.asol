@@ -1,0 +1,20 @@
+aspect WalletVerification {
+	add-to-declarations Wallet {
+		private bool is_verified = false;
+		private uint number_of_payments = 0;
+		private uint sum_of_payments = 0;
+	}
+
+	before execution-of Wallet.sendFunds(payable address dst, uint amount) {
+		if (!is_verified) {
+			require (number_of_payments < 1000);
+			require (sum_of_payments + amount <= 100 ether); 
+			number_of_payments ++;
+			sum_of_payments += amount;
+		}
+	}
+	
+	after execution-of Wallet.verifyWallet() {
+		is_verified = true;
+	}
+}
