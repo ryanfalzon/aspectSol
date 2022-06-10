@@ -1,6 +1,6 @@
 ﻿using AspectSol.Lib.App;
 using AspectSol.Lib.Domain.JavascriptExecution;
-using AspectSol.Lib.Infra;
+using AspectSol.Lib.Infra.ServiceCollectionExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -63,7 +63,7 @@ public class Program
             .ConfigureServices(services =>
             {
                 services.AddTransient<Program>();
-                services.AddAspectSolServiceConfig();
+                AspectSolCollectionExtensions.AddAspectSolServiceConfig(services);
             });
     }
 }

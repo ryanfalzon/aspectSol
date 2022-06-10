@@ -4,19 +4,19 @@ namespace AspectSol.Lib.Domain.AST;
 
 public class SenderNode : Node
 {
-    public ReferenceDefinitionSyntaxNode ReferenceDefinition { get; set; }
+    public SyntaxDefinitionNodeReference SyntaxDefinitionNodeReference { get; init; }
 
     public override string ToString()
     {
         StringBuilder stringBuilder = new();
 
-        stringBuilder.AppendLine($"{GetIndentation()}<SenderNode>");
+        stringBuilder.AppendLine($"{GetIndentation()}<{nameof(SenderNode)}>");
         IncreaseIndentation();
 
-        stringBuilder.AppendLine(ReferenceDefinition.ToString());
+        stringBuilder.AppendLine(SyntaxDefinitionNodeReference.ToString());
 
         DecreaseIndentation();
-        stringBuilder.AppendLine($"{GetIndentation()}</SenderNode>");
+        stringBuilder.AppendLine($"{GetIndentation()}</{nameof(SenderNode)}>");
 
         return stringBuilder.ToString();
     }

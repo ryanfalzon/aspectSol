@@ -1,5 +1,5 @@
 ﻿namespace AspectSol.Lib.Domain.AST;
 
-public abstract class DecoratorNode : Node
+public abstract class DecoratorNode : FilterableNode
 {
 }

@@ -39,7 +39,7 @@ public abstract class AbstractParser : IParser
     protected DslToken ReadToken(TokenType expectedTokenType)
     {
         if (LookaheadFirst.TokenType != expectedTokenType)
-            throw new DslParserException($"Expected [{expectedTokenType.ToString().ToUpper()}] but found: [{LookaheadFirst.Value}]");
+            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{expectedTokenType.ToString().ToUpper()}] but found: [{LookaheadFirst.Value}]");
 
         return LookaheadFirst;
     }
@@ -47,7 +47,7 @@ public abstract class AbstractParser : IParser
     protected void ValidateToken(TokenType expectedTokenType)
     {
         if (LookaheadFirst.TokenType != expectedTokenType)
-            throw new DslParserException($"Expected [{expectedTokenType.ToString().ToUpper()}] but found: [{LookaheadFirst.Value}]");
+            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{expectedTokenType.ToString().ToUpper()}] but found: [{LookaheadFirst.Value}]");
     }
 
     protected void DiscardToken()
@@ -59,7 +59,7 @@ public abstract class AbstractParser : IParser
     protected void DiscardToken(TokenType expectedTokenType)
     {
         if (LookaheadFirst.TokenType != expectedTokenType)
-            throw new DslParserException($"Expected [{expectedTokenType.ToString().ToUpper()}] but found: [{LookaheadFirst.Value}]");
+            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{expectedTokenType.ToString().ToUpper()}] but found: [{LookaheadFirst.Value}]");
 
         DiscardToken();
     }

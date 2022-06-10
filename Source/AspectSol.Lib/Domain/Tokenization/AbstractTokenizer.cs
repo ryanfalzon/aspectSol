@@ -47,6 +47,6 @@ public abstract class AbstractTokenizer : ITokenizer
             };
         }
 
-        throw new DslParserException("Failed to generate invalid token");
+        throw new DslParserException(ExceptionCode.TokenGenerationFailed, "Failed to generate invalid token");
     }
 }

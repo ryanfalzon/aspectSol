@@ -2,9 +2,9 @@
 
 namespace AspectSol.Lib.Domain.AST;
 
-public abstract class StatementNode : Node
+public abstract class StatementNode : ExecutableNode
 {
-    public List<AspectExpressionNode> Body { get; set; }
+    protected IEnumerable<ExpressionNode> Body { get; set; }
 
     public override string ToString()
     {

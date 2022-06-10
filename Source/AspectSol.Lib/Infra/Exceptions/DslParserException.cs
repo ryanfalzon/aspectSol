@@ -2,7 +2,7 @@
 
 public class DslParserException : Exception
 {
-    public DslParserException(string message) : base(message)
+    public DslParserException(ExceptionCode code, string message) : base(message)
     {
     }
 }

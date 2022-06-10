@@ -4,24 +4,28 @@ namespace AspectSol.Lib.Domain.AST;
 
 public abstract class Node
 {
+    /// <summary>
+    /// Used to output AST node into an XML representation
+    /// </summary>
+    /// <returns>Encoded XML version of AST node</returns>
     public abstract override string ToString();
 
-    private StringBuilder indentation;
+    private StringBuilder _indentation;
 
     protected string GetIndentation()
     {
-        indentation ??= new();
+        _indentation ??= new();
 
-        return indentation.ToString();
+        return _indentation.ToString();
     }
 
     protected void IncreaseIndentation()
     {
-        indentation = indentation == null ? new() : indentation.Append('\t');
+        _indentation = _indentation == null ? new() : _indentation.Append('\t');
     }
 
     protected void DecreaseIndentation()
     {
-        indentation = indentation == null ? new() : indentation.Remove(indentation.Length, 1);
+        _indentation = _indentation == null ? new() : _indentation.Remove(_indentation.Length, 1);
     }
 }
