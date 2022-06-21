@@ -42,5 +42,6 @@ public enum TokenType
     OpenScope = 38,
     CloseScope = 39,
     Address = 40,
-    Aspect = 41
+    Aspect = 41,
+    Scope = 42
 }

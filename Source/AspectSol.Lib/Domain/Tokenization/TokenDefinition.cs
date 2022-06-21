@@ -10,7 +10,13 @@ public class TokenDefinition
 
     public TokenDefinition(TokenType returnsToken, string regexPattern)
     {
-        _regex = new(regexPattern, RegexOptions.IgnoreCase);
+        _regex        = new Regex(regexPattern);
+        _returnsToken = returnsToken;
+    }
+
+    public TokenDefinition(TokenType returnsToken, Regex regex)
+    {
+        _regex        = regex;
         _returnsToken = returnsToken;
     }
 
@@ -18,15 +24,15 @@ public class TokenDefinition
     {
         var match = _regex.Match(inputString);
 
-        if (!match.Success) return new() { IsMatch = false };
+        if (!match.Success) return new TokenMatch { IsMatch = false };
 
         var remainingText = match.Length != inputString.Length ? inputString[match.Length..] : string.Empty;
-        return new()
+        return new TokenMatch
         {
-            IsMatch = true,
+            IsMatch       = true,
             RemainingText = remainingText,
-            TokenType = _returnsToken,
-            Value = match.Value
+            TokenType     = _returnsToken,
+            Value         = match.Value
         };
     }
 }

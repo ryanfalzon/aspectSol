@@ -1,18 +1,45 @@
-﻿using AspectSol.Lib.Infra.Enums;
+﻿using System.Text.RegularExpressions;
+using AspectSol.Lib.Infra.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace AspectSol.Lib.Domain.Tokenization;
 
-public class Tokenizer : AbstractTokenizer
+public class Tokenizer : AbstractTokenizer, ITokenizer
 {
-    public Tokenizer(ILogger<Tokenizer> logger) : base(logger)
+    public Tokenizer(ILogger logger) : base(logger)
     {
-        TokenDefinitions = new()
+        TokenDefinitions = new List<TokenDefinition>
         {
-            new(TokenType.Before, "^before"),
-            new(TokenType.After, "^after"),
-            new(TokenType.CallTo, "^call-to"),
-            new(TokenType.ExecutionOf, "^execution-of"),
+            // AspectSol Keywords
+            new(TokenType.Before, new Regex("^before")),
+            new(TokenType.After, new Regex("^after")),
+            new(TokenType.CallTo, new Regex("^call-to")),
+            new(TokenType.ExecutionOf, new Regex("^execution-of")),
+            new(TokenType.TaggedWith, new Regex("^tagged-with")),
+            new(TokenType.ImplementingInterface, new Regex("^implementing-interface")),
+            new(TokenType.Public, new Regex("^public")),
+            new(TokenType.Private, new Regex("^private")),
+            new(TokenType.Internal, new Regex("^internal")),
+            new(TokenType.External, new Regex("^external")),
+            new(TokenType.Pure, new Regex("^pure")),
+            new(TokenType.View, new Regex("^view")),
+            new(TokenType.ReturningTypes, new Regex("^returning-types")),
+            new(TokenType.InInterface, new Regex("^in-interface")),
+            new(TokenType.NotInInterface, new Regex("^not-in-interface")),
+            new(TokenType.Get, new Regex("^get")),
+            new(TokenType.Set, new Regex("^set")),
+            new(TokenType.OriginatingFrom, new Regex("^originating-from")),
+            new(TokenType.AddToDeclaration, new Regex("^add-to-declaration")),
+            new(TokenType.UpdateDefinition, new Regex("^update-definition")),
+            new(TokenType.Aspect, new Regex("^aspect")),
+            
+            // AspectSol Conditions
+            new(TokenType.NotSymbol, "^!"),
+            new(TokenType.AndSymbol, "^&"),
+            new(TokenType.OrSymbol, "^|"),
+            
+            // AspectSol Symbols
+            new(TokenType.Wildcard, "^*"),
             new(TokenType.OpenParenthesis, "^\\("),
             new(TokenType.CloseParenthesis, "^\\)"),
             new(TokenType.Comma, "^,"),
@@ -20,67 +47,16 @@ public class Tokenizer : AbstractTokenizer
             new(TokenType.DoubleColon, "^::"),
             new(TokenType.OpenDoubleSquareBrackets, "^[["),
             new(TokenType.CloseDoubleSquareBrackets, "^]]"),
-            new(TokenType.Wildcard, "^*"),
-            new(TokenType.TaggedWith, "^tagged-with"),
-            new(TokenType.ImplementingInterface, "^implementing-interface"),
-            new(TokenType.NotSymbol, "^!"),
-            new(TokenType.AndSymbol, "^&"),
-            new(TokenType.OrSymbol, "^|"),
-            new(TokenType.Public, "^public"),
-            new(TokenType.Private, "^private"),
-            new(TokenType.Internal, "^internal"),
-            new(TokenType.External, "^external"),
-            new(TokenType.Pure, "^pure"),
-            new(TokenType.View, "^view"),
-            new(TokenType.ReturningTypes, "^returning-types"),
-            new(TokenType.InInterface, "^in-interface"),
-            new(TokenType.NotInInterface, "^not-in-interface"),
-            new(TokenType.Get, "^get"),
-            new(TokenType.Set, "^set"),
             new(TokenType.OpenSquareBrackets, "^["),
             new(TokenType.CloseSquareBrackets, "^]"),
-            new(TokenType.OriginatingFrom, "^originating-from"),
-            new(TokenType.AddToDeclaration, "^add-to-declaration"),
-            new(TokenType.UpdateDefinition, "^update-definition"),
             new(TokenType.StringValue, "^'[^']*'"),
             new(TokenType.Number, "^\\d+"),
             new(TokenType.OpenScope, "^{"),
             new(TokenType.CloseScope, "^}"),
-            new(TokenType.Aspect, "^aspect")
+            
+            // AspectSol Other Items
+            new(TokenType.Number, new Regex("^[0-9]+")),
+            new(TokenType.StringValue, new Regex("^([\"]{1}|[']{1})[a-zA-Z0-9]*([\"]{1}|[']{1})")),
         };
-    }
-
-    public override List<DslToken> Tokenize(string source, bool verboseLogging = false)
-    {
-        var tokens = new List<DslToken>();
-
-        var remainingText = source;
-
-        while (!string.IsNullOrWhiteSpace(remainingText))
-        {
-            var match = FindMatch(remainingText);
-            if (match.IsMatch)
-            {
-                tokens.Add(new(match.TokenType, match.Value));
-                remainingText = match.RemainingText;
-            }
-            else
-            {
-                if (IsWhitespace(remainingText))
-                {
-                    remainingText = remainingText[1..];
-                }
-                else
-                {
-                    var invalidTokenMatch = CreateInvalidTokenMatch(remainingText);
-                    tokens.Add(new(invalidTokenMatch.TokenType, invalidTokenMatch.Value));
-                    remainingText = invalidTokenMatch.RemainingText;
-                }
-            }
-        }
-
-        tokens.Add(new(TokenType.SequenceTerminator, string.Empty));
-
-        return tokens;
     }
 }

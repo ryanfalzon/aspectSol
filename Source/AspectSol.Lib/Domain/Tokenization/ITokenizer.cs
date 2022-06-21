@@ -2,5 +2,5 @@
 
 public interface ITokenizer
 {
-    List<DslToken> Tokenize(string source, bool verboseLogging = false);
+    List<DslToken> Tokenize(string source);
 }
