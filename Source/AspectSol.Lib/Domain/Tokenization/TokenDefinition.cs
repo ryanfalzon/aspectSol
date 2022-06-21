@@ -1,5 +1,4 @@
-﻿using AspectSol.Lib.Infra.Enums;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace AspectSol.Lib.Domain.Tokenization;
 

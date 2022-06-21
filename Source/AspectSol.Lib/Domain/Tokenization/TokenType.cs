@@ -1,4 +1,4 @@
-﻿namespace AspectSol.Lib.Infra.Enums;
+﻿namespace AspectSol.Lib.Domain.Tokenization;
 
 public enum TokenType
 {
@@ -43,5 +43,6 @@ public enum TokenType
     CloseScope = 39,
     Address = 40,
     Aspect = 41,
-    Scope = 42
+    Scope = 42,
+    ArbitraryWord = 43
 }

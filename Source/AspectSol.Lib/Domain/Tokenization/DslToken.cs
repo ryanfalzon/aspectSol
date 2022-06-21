@@ -1,6 +1,4 @@
-﻿using AspectSol.Lib.Infra.Enums;
-
-namespace AspectSol.Lib.Domain.Tokenization;
+﻿namespace AspectSol.Lib.Domain.Tokenization;
 
 public class DslToken
 {

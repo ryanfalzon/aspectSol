@@ -1,5 +1,4 @@
-﻿using AspectSol.Lib.Infra.Enums;
-using AspectSol.Lib.Infra.Exceptions;
+﻿using AspectSol.Lib.Infra.Exceptions;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 
@@ -8,10 +7,10 @@ namespace AspectSol.Lib.Domain.Tokenization;
 public abstract class AbstractTokenizer
 {
     protected List<TokenDefinition> TokenDefinitions;
-    private readonly ILogger _logger;
+    private readonly ILogger<AbstractTokenizer> _logger;
     private readonly Regex _lineBreakRegex;
 
-    protected AbstractTokenizer(ILogger logger)
+    protected AbstractTokenizer(ILogger<AbstractTokenizer> logger)
     {
         _logger         = logger;
         _lineBreakRegex = new Regex("^(\\s?\r\n|\\s?\r|\\s?\n)");
