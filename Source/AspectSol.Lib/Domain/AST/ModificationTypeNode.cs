@@ -5,7 +5,12 @@ namespace AspectSol.Lib.Domain.AST;
 
 public class ModificationTypeNode : Node
 {
-    public ModificationType Value { get; init; }
+    public ModificationType Value { get; }
+    
+    public ModificationTypeNode(ModificationType value)
+    {
+        Value = value;
+    }
 
     public override string ToString()
     {

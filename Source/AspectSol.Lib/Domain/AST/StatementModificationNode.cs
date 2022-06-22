@@ -9,7 +9,7 @@ public class StatementModificationNode : StatementNode
 {
     public ModificationTypeNode ModificationType { get; set; }
 
-    public SyntaxDefinitionNodeReference SyntaxDefinitionNodeReferenceDefinitionNode { get; set; }
+    public SyntaxDefinitionNodeReference SyntaxDefinitionNodeReferenceNode { get; set; }
 
     public DecoratorDefinitionNode DecoratorDefinition { get; set; }
 
@@ -21,7 +21,7 @@ public class StatementModificationNode : StatementNode
         IncreaseIndentation();
 
         stringBuilder.AppendLine(ModificationType.ToString());
-        stringBuilder.AppendLine(SyntaxDefinitionNodeReferenceDefinitionNode.ToString());
+        stringBuilder.AppendLine(SyntaxDefinitionNodeReferenceNode.ToString());
         stringBuilder.AppendLine(DecoratorDefinition.ToString());
         stringBuilder.AppendLine(base.ToString());
 

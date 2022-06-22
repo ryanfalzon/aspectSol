@@ -5,7 +5,12 @@ namespace AspectSol.Lib.Domain.AST;
 
 public class VariableAccessNode : Node
 {
-    public VariableAccess Value { get; init; }
+    public VariableAccess Value { get; }
+    
+    public VariableAccessNode(VariableAccess value)
+    {
+        Value = value;
+    }
 
     public override string ToString()
     {

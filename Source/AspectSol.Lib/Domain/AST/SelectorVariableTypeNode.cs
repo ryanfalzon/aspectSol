@@ -7,13 +7,14 @@ namespace AspectSol.Lib.Domain.AST;
 
 public class SelectorVariableTypeNode : SelectorNode
 {
-    public string VariableType { get; init; }
+    public string VariableType { get; }
     
     private VariableAccess VariableAccess { get; }
     
-    public SelectorVariableTypeNode(VariableAccess variableAccess)
+    public SelectorVariableTypeNode(VariableAccess variableAccess, string variableType)
     {
         VariableAccess = variableAccess;
+        VariableType   = variableType;
     }
 
     public override string ToString()

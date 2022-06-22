@@ -45,5 +45,7 @@ public class StatementAppendNode : StatementNode
         
         TempStorageRepository.Add(tempContent, out var filename);
         var bodyAst = javascriptExecutor.Execute("generateAst", new object[] { $"tmp/{filename}.txt" }).Result;
+        // TODO
+        return default;
     }
 }

@@ -5,7 +5,12 @@ namespace AspectSol.Lib.Domain.AST;
 
 public class PlacementNode : Node
 {
-    public Placement Value { get; init; }
+    public Placement Value { get; }
+
+    public PlacementNode(Placement value)
+    {
+        Value = value;
+    }
 
     public override string ToString()
     {

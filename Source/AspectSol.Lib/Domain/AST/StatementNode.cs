@@ -4,7 +4,7 @@ namespace AspectSol.Lib.Domain.AST;
 
 public abstract class StatementNode : ExecutableNode
 {
-    protected IEnumerable<ExpressionNode> Body { get; set; }
+    public IEnumerable<ExpressionNode> Body { get; set; }
 
     public override string ToString()
     {

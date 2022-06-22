@@ -5,7 +5,12 @@ namespace AspectSol.Lib.Domain.AST;
 
 public class LocationNode : Node
 {
-    public Location Value { get; init; }
+    public Location Value { get; }
+    
+    public LocationNode(Location value)
+    {
+        Value = value;
+    }
 
     public override string ToString()
     {

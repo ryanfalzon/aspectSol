@@ -1,613 +1,704 @@
 ﻿using AspectSol.Lib.Domain.AST;
 using AspectSol.Lib.Domain.Tokenization;
 using AspectSol.Lib.Infra.Enums;
-using AspectSol.Lib.Infra.Exceptions;
 using AspectSol.Lib.Infra.Extensions;
 
 namespace AspectSol.Lib.Domain.Parsing;
 
-public class Parser : AbstractParser
+public class Parser : AbstractParser, IParser
 {
-    public override AspectNode Parse(List<DslToken> tokens)
+    public AspectNode Parse(List<DslToken> tokens)
     {
         Initialize(tokens);
 
-        var aspectNode = Match();
-
-        DiscardToken(TokenType.SequenceTerminator);
+        var aspectNode = MatchAspect();
 
         return aspectNode;
     }
 
-    private AspectNode Match()
+    private AspectNode MatchAspect()
     {
-        AspectNode node;
-        if (LookaheadFirst.TokenType == TokenType.Aspect)
+        DiscardToken(TokenType.Aspect, "An aspect needs to start with the 'aspect' keyword");
+
+        ValidateToken(TokenType.ArbitraryWord, "An aspect needs to have a name associated to it");
+        var aspectName = LookaheadFirst.Value;
+        DiscardToken();
+
+        DiscardToken(TokenType.OpenScope, "Aspect must be enclosed within '{}' characters. '{' character missing");
+
+        var statements = new List<StatementNode>();
+        while (LookaheadFirst.TokenType != TokenType.CloseScope)
         {
-            DiscardToken();
-            ValidateToken(TokenType.StringValue);
-
-            node = new AspectNode
-            {
-                Name       = LookaheadFirst.Value,
-                Statements = new List<StatementNode>()
-            };
-
-            DiscardToken(TokenType.OpenScope);
-
-            while (LookaheadFirst.TokenType != TokenType.SequenceTerminator)
-            {
-                node.Statements.Add(MatchStatement());
-            }
-
-            DiscardToken(TokenType.CloseScope);
+            statements.Add(MatchStatement());
         }
-        else
+        
+        DiscardToken(TokenType.CloseScope, "Aspect must be enclosed within '{}' characters. '}' character missing");
+
+        return new AspectNode
         {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.Aspect}] but found: [{LookaheadFirst.Value}]");
-        }
-
-        return node;
+            Name       = aspectName,
+            Statements = statements
+        };
     }
 
     private StatementNode MatchStatement()
     {
         StatementNode node;
+        if (LookaheadFirst.IsAppendStatement()) node            = MatchStatementAppend();
+        else if (LookaheadFirst.IsModificationStatement()) node = MatchStatementModification();
+        else throw ParserException("Currently supported statements include append statements and modification statements");
 
-        if (LookaheadFirst.IsAppendStatement())
-        {
-            node = MatchAppendStatement();
-        }
-        else if (LookaheadFirst.IsModificationStatement())
-        {
-            node = MatchModificationStatement();
-        }
-        else
-        {
-            throw new DslParserException(ExceptionCode.InvalidToken, "provided statement not recognized. Current version of AspectSol only supports append and modification statements");
-        }
+        ValidateToken(TokenType.Scope, "Any statement needs to have a scope body associated to it");
+        var body = LookaheadFirst.Value.Replace("¬{", string.Empty).Replace("}¬", string.Empty);
+        DiscardToken();
 
-        DiscardToken(TokenType.OpenScope);
-        DiscardToken(TokenType.CloseScope);
+        node.Body = new List<ExpressionNode>
+        {
+            new ExpressionGenericNode
+            {
+                Expression = body
+            }
+        };
 
         return node;
     }
 
-    private StatementAppendNode MatchAppendStatement()
+    private StatementAppendNode MatchStatementAppend()
     {
-        var appendStatement = new StatementAppendNode
+        var placement = MatchPlacement();
+        var location = MatchLocation();
+
+        var selectors = new List<SelectorNode> {MatchSelector()};
+
+        while (LookaheadFirst.TokenType is TokenType.ReturningTypes or TokenType.InInterface or TokenType.NotInInterface)
         {
-            Placement = new PlacementNode {Value = LookaheadFirst.GetPlacement()}
+            selectors.Add(MatchSelector());
+        }
+
+        var sender = LookaheadFirst.TokenType is TokenType.OriginatingFrom
+            ? MatchSender()
+            : null;
+
+        return new StatementAppendNode
+        {
+            Location  = location,
+            Placement = placement,
+            Selectors = selectors,
+            Sender    = sender
         };
+    }
 
-        DiscardToken();
+    private SenderNode MatchSender()
+    {
+        DiscardToken(TokenType.OriginatingFrom, "A sender tag needs to start with the keyword 'originating-from'");
 
-        appendStatement.Location = new LocationNode {Value = LookaheadFirst.GetLocation()};
-        DiscardToken();
+        return new SenderNode
+        {
+            SyntaxDefinitionNodeReference = MatchSyntaxDefinitionNodeReference()
+        };
+    }
 
-        var selectors = new List<SelectorNode>();
+    private SelectorNode MatchSelector()
+    {
         if (LookaheadFirst.IsDefinitionSelector())
         {
-            selectors.Add(MatchDefinitionSelector());
-            selectors.AddRange(MatchReturnSelector());
-            selectors.AddRange(MatchInterfaceSelector());
+            return MatchSelectorDefinition();
         }
-        else if (LookaheadFirst.IsVariableSelector())
+
+        if (LookaheadFirst.TokenType is TokenType.ReturningTypes)
         {
-            selectors.Add(MatchVariableSelector());
+            return MatchSelectorFunctionReturn();
+        }
+
+        if (LookaheadFirst.TokenType is TokenType.InInterface or TokenType.NotInInterface)
+        {
+            return MatchSelectorInterfaceFunctionName();
+        }
+
+        if (LookaheadFirst.IsVariableSelector())
+        {
+            return MatchSelectorVariable();
+        }
+
+        throw ParserException("A selector node can either be of type definition, returning types, interface function or variable selectors");
+    }
+
+    private SelectorVariableNode MatchSelectorVariable()
+    {
+        var variableAccess = MatchVariableAccessNode();
+
+        SelectorNode variableTypeSelector;
+        if (LookaheadFirst.TokenType is TokenType.Wildcard)
+        {
+            var wildcardFor = variableAccess.Value == VariableAccess.Get ? WildcardFor.VariableTypeGetter : WildcardFor.VariableTypeSetter;
+            variableTypeSelector = MatchSelectorWildcard(wildcardFor);
+        }
+        else if (LookaheadFirst.TokenType is TokenType.ArbitraryWord)
+        {
+            variableTypeSelector = MatchSelectorVariableType(variableAccess.Value);
+        }
+        else if (LookaheadFirst.TokenType is TokenType.OpenDoubleSquareBrackets)
+        {
+            variableTypeSelector = MatchSelectorMapping();
         }
         else
         {
-            throw new DslParserException(ExceptionCode.InvalidToken, "Provided selector not recognized. Current version of AspectSol only supports definition and variable selectors");
+            throw ParserException("A variable type selector can either be of type wildcard, mapping or arbitrary word which identifies the variable type");
         }
 
-        appendStatement.Selectors = selectors;
+        var variableLocation = MatchContractSelector();
 
-        if (LookaheadFirst.TokenType == TokenType.OriginatingFrom)
+        DiscardToken(TokenType.FullStop, "Variable location and variable name must be seperated by the '.' character");
+
+        SelectorNode variableNameSelector;
+        if (LookaheadFirst.TokenType is TokenType.Wildcard)
         {
-            DiscardToken();
-
-            appendStatement.Sender = new SenderNode
-            {
-                SyntaxDefinitionNodeReference = MatchReferenceDefinition()
-            };
+            var wildcardFor = variableAccess.Value == VariableAccess.Get ? WildcardFor.VariableTypeGetter : WildcardFor.VariableTypeSetter;
+            variableNameSelector = MatchSelectorWildcard(wildcardFor);
         }
-
-        return appendStatement;
-    }
-
-    private SelectorDefinitionNode MatchDefinitionSelector()
-    {
-        var definitionSelector = new SelectorDefinitionNode();
-
-        // Step 1 - Parse definition syntax
-        // TODO - Support InstanceDefinitionSyntax
-        definitionSelector.SyntaxDefinition = MatchReferenceDefinition();
-
-        // Step 2 - Parse optional parameters
-        definitionSelector.Parameters = MatchOptionalParameterNodes().ToList();
-
-        // Step 3 - Parse definition decorator
-        if (LookaheadFirst.TokenType == TokenType.TaggedWith)
+        else if (LookaheadFirst.TokenType is TokenType.ArbitraryWord && LookaheadSecond.TokenType is TokenType.OpenDoubleSquareBrackets)
         {
-            DiscardToken();
-            definitionSelector.DecoratorDefinition = new DecoratorDefinitionTaggedNode
-            {
-                SyntaxModifier = MatchModifierSyntax()
-            };
+            variableNameSelector = MatchSelectorVariableDictionaryElementName(variableAccess.Value);
         }
-        else if (LookaheadFirst.TokenType == TokenType.ImplementingInterface)
+        else if (LookaheadFirst.TokenType is TokenType.ArbitraryWord && LookaheadSecond.TokenType is TokenType.FullStop)
         {
-            DiscardToken();
-            if (LookaheadFirst.TokenType == TokenType.StringValue)
-            {
-                definitionSelector.DecoratorDefinition = new DecoratorDefinitionImplementingNode
-                {
-                    InterfaceName = LookaheadFirst.Value
-                };
-            }
-            else
-            {
-                throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
-            }
+            variableNameSelector = MatchSelectorVariablePropertyName();
+        }
+        else if (LookaheadFirst.TokenType is TokenType.ArbitraryWord)
+        {
+            variableNameSelector = MatchSelectorVariableName(variableAccess.Value);
         }
         else
         {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.TaggedWith}] or [{TokenType.ImplementingInterface}] but found: [{LookaheadFirst.Value}]");
+            throw ParserException("A variable name selector can either be of type wildcard, mapping, property or arbitrary word which identifies " +
+                "the variable type");
         }
 
-        return definitionSelector;
-    }
+        var decoratorVariable = MatchDecoratorVariable(variableAccess.Value);
 
-    private SyntaxDefinitionNodeReference MatchReferenceDefinition()
-    {
-        var definitionSyntax = new SyntaxDefinitionNodeReference
+        return new SelectorVariableNode
         {
-            ContractSelector = MatchContractSelector()
+            VariableAccessNode   = variableAccess,
+            VariableType         = variableTypeSelector,
+            VariableLocation     = variableLocation,
+            VariableNameSelector = variableNameSelector,
+            DecoratorVariable    = decoratorVariable
         };
-
-        DiscardToken(TokenType.FullStop);
-        if (LookaheadFirst.TokenType == TokenType.Wildcard)
-        {
-            definitionSyntax.FunctionSelector = new SelectorWildcardNode
-            {
-                WildcardFor = WildcardFor.Function
-            };
-            DiscardToken();
-        }
-        else if (LookaheadFirst.TokenType == TokenType.StringValue)
-        {
-            definitionSyntax.FunctionSelector = new SelectorFunctionNameNode {FunctionName = LookaheadFirst.Value};
-            DiscardToken();
-        }
-        else
-        {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.Wildcard}] or [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
-        }
-
-        return definitionSyntax;
     }
 
-    private SelectorNode MatchContractSelector()
+    private DecoratorVariableNode MatchDecoratorVariable(VariableAccess variableAccess)
     {
-        SelectorNode selector = null;
+        DiscardToken(TokenType.TaggedWith, "Variable decorator tag must start with the 'tagged-with' keyword");
 
-        if (LookaheadFirst.TokenType == TokenType.Wildcard)
-        {
-            selector = new SelectorWildcardNode
-            {
-                WildcardFor = WildcardFor.Contract
-            };
-            DiscardToken();
-        }
-        else if (LookaheadFirst.TokenType == TokenType.OpenDoubleSquareBrackets)
-        {
-            DiscardToken();
-            ValidateToken(TokenType.StringValue);
-
-            selector = new SelectorMappingNode {MappingName = LookaheadFirst.Value};
-            DiscardToken();
-
-            DiscardToken(TokenType.CloseDoubleSquareBrackets);
-        }
-        else if (LookaheadFirst.TokenType == TokenType.Address)
-        {
-            selector = new SelectorContractAddressNode {ContractAddress = LookaheadFirst.Value};
-            DiscardToken();
-        }
-        else if (LookaheadFirst.TokenType == TokenType.StringValue)
-        {
-            if (LookaheadSecond.TokenType == TokenType.DoubleColon)
-            {
-                var contractName = LookaheadFirst.Value;
-
-                DiscardToken();
-                DiscardToken();
-                ValidateToken(TokenType.StringValue);
-
-                var interfaceName = LookaheadFirst.Value;
-
-                selector = new SelectorInterfaceContractNode
-                {
-                    ContractName  = contractName,
-                    InterfaceName = interfaceName
-                };
-
-                DiscardToken();
-            }
-
-            selector = new SelectorContractNameNode {ContractName = LookaheadFirst.Value};
-            DiscardToken();
-        }
-        else
-        {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.Wildcard}] or [{TokenType.OpenDoubleSquareBrackets}] or" +
-                $"[{TokenType.Address}] or [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
-        }
-
-        return selector;
-    }
-
-    private IEnumerable<ParameterNode> MatchOptionalParameterNodes()
-    {
-        if (LookaheadFirst.TokenType != TokenType.OpenParenthesis) return null;
-
-        var parameters = new List<ParameterNode>();
-
-        DiscardToken();
-        while (LookaheadFirst.TokenType != TokenType.CloseParenthesis)
-        {
-            if (LookaheadFirst.TokenType == TokenType.StringValue && LookaheadSecond.TokenType == TokenType.StringValue)
-            {
-                parameters.Add(new ParameterNode
-                {
-                    Type = LookaheadFirst.Value,
-                    Name = LookaheadSecond.Value
-                });
-
-                DiscardToken();
-                DiscardToken();
-            }
-
-            if (LookaheadFirst.TokenType != TokenType.Comma &&
-                LookaheadFirst.TokenType != TokenType.CloseParenthesis)
-            {
-                throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.Comma}] or [{TokenType.CloseParenthesis}] but found: [{LookaheadFirst.Value}]");
-            }
-        }
+        VariableVisibility variableVisibility;
+        if (LookaheadFirst.TokenType == TokenType.Public) variableVisibility        = VariableVisibility.Public;
+        else if (LookaheadFirst.TokenType == TokenType.Private) variableVisibility  = VariableVisibility.Private;
+        else if (LookaheadFirst.TokenType == TokenType.Internal) variableVisibility = VariableVisibility.Internal;
+        else throw ParserException(@"Supported variable visibilities include 'public', 'private' and 'internal'");
 
         DiscardToken();
 
-        return parameters;
+        return new DecoratorVariableNode(variableAccess)
+        {
+            VariableVisibility = variableVisibility
+        };
     }
 
-    private SyntaxModifierNode MatchModifierSyntax()
+    private SelectorVariableNameNode MatchSelectorVariableName(VariableAccess variableAccess)
     {
-        var modifierSyntax = new SyntaxModifierNode();
+        ValidateToken(TokenType.ArbitraryWord, "Selector variable name must start with a variable name");
+        var variableName = LookaheadFirst.Value;
+        DiscardToken();
 
+        return new SelectorVariableNameNode(variableAccess)
+        {
+            VariableName = variableName
+        };
+    }
+
+    private SelectorVariablePropertyNameNode MatchSelectorVariablePropertyName()
+    {
+        ValidateToken(TokenType.ArbitraryWord, "Variable property name selector must be an arbitrary word");
+        var propertyName = LookaheadFirst.Value;
+        DiscardToken();
+
+        SelectorVariablePropertyNameNode child = null;
+        if (LookaheadFirst.TokenType == TokenType.FullStop)
+        {
+            DiscardToken();
+            child = MatchSelectorVariablePropertyName();
+        }
+
+        return new SelectorVariablePropertyNameNode
+        {
+            PropertyName = propertyName,
+            Child        = child
+        };
+    }
+
+    private SelectorVariableDictionaryElementNameNode MatchSelectorVariableDictionaryElementName(VariableAccess variableAccess)
+    {
+        ValidateToken(TokenType.ArbitraryWord, "Variable dictionary element name selector must be an arbitrary word");
+        var variableName = LookaheadFirst.Value;
+        DiscardToken();
+
+        SelectorNode keySelector;
+        if (LookaheadFirst.TokenType is TokenType.Wildcard)
+        {
+            keySelector = MatchSelectorWildcard(WildcardFor.DictionaryElement);
+        }
+        else if (LookaheadFirst.TokenType == TokenType.OpenSquareBrackets)
+        {
+            keySelector = MatchSelectorMapping();
+        }
+        else if (LookaheadFirst.TokenType == TokenType.StringValue)
+        {
+            keySelector = MatchSelectorVariableConstantKey();
+        }
+        else
+        {
+            throw ParserException("Key selector for dictionary element selector can either be a wildcard, mapping or constant selector");
+        }
+
+        return new SelectorVariableDictionaryElementNameNode(variableAccess)
+        {
+            VariableName = variableName,
+            KeySelector  = keySelector
+        };
+    }
+
+    private SelectorVariableConstantKeyNode MatchSelectorVariableConstantKey()
+    {
+        ValidateToken(TokenType.ArbitraryWord, "Variable constant selector needs to be an arbitrary word");
+        var constant = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new SelectorVariableConstantKeyNode
+        {
+            Constant = constant
+        };
+    }
+
+    private SelectorVariableTypeNode MatchSelectorVariableType(VariableAccess variableAccess)
+    {
+        ValidateToken(TokenType.ArbitraryWord, "A selector variable type must start with an arbitrary word denoting the variable type");
+        var variableType = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new SelectorVariableTypeNode(variableAccess, variableType);
+    }
+
+    private VariableAccessNode MatchVariableAccessNode()
+    {
+        VariableAccess variableAccess;
+        if (LookaheadFirst.TokenType == TokenType.Get) variableAccess      = VariableAccess.Get;
+        else if (LookaheadFirst.TokenType == TokenType.Set) variableAccess = VariableAccess.Set;
+        else throw ParserException(@"Supported variable access tags tags include 'in-interface' and 'not-in-interface'");
+
+        DiscardToken();
+        return new VariableAccessNode(variableAccess);
+    }
+
+    private SelectorInterfaceFunctionNameNode MatchSelectorInterfaceFunctionName()
+    {
+        var interfaceTag = MatchInterfaceTag();
+
+        ValidateToken(TokenType.ArbitraryWord, "Selector interface function name must be an arbitrary word");
+        var interfaceName = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new SelectorInterfaceFunctionNameNode
+        {
+            InterfaceName    = interfaceName,
+            InterfaceTagNode = interfaceTag
+        };
+    }
+
+    private InterfaceTagNode MatchInterfaceTag()
+    {
+        InterfaceTag interfaceTag;
+        if (LookaheadFirst.TokenType == TokenType.InInterface) interfaceTag         = InterfaceTag.InInterface;
+        else if (LookaheadFirst.TokenType == TokenType.NotInInterface) interfaceTag = InterfaceTag.NotInInterface;
+        else throw ParserException(@"Supported interface tags include 'in-interface' and 'not-in-interface'");
+
+        DiscardToken();
+        return new InterfaceTagNode(interfaceTag);
+    }
+
+    private SelectorFunctionReturnNode MatchSelectorFunctionReturn()
+    {
+        DiscardToken(TokenType.ReturningTypes, "Selector function returns must start with the keyword 'returning-types'");
+
+        DiscardToken(TokenType.OpenParenthesis, "Selector function returns must be enclosed within '()' characters. '(' character missing");
+
+        var returns = new List<string>();
+        while(LookaheadFirst.TokenType is TokenType.ArbitraryWord)
+        {
+            returns.Add(LookaheadFirst.Value);
+
+            if (LookaheadFirst.TokenType is not TokenType.CloseParenthesis && LookaheadFirst.TokenType is not TokenType.Comma)
+            {
+                throw ParserException("A comma must be inserted between return definitions");
+            }
+        }
+
+        DiscardToken(TokenType.CloseParenthesis, "Selector function returns must be enclosed within '()' characters. ')' character missing");
+
+        return new SelectorFunctionReturnNode
+        {
+            Returns = returns,
+        };
+    }
+
+    private SelectorDefinitionNode MatchSelectorDefinition()
+    {
+        var syntaxDefinition = MatchSyntaxDefinitionNodeReference();
+        
+        DecoratorDefinitionNode decoratorDefinition = null;
+        if (LookaheadFirst.TokenType is TokenType.TaggedWith or TokenType.ImplementingInterface)
+        {
+            decoratorDefinition = MatchDecorator();
+        }
+        
+        return new SelectorDefinitionNode
+        {
+            SyntaxDefinition    = syntaxDefinition,
+            DecoratorDefinition = decoratorDefinition
+        };
+    }
+
+    private LocationNode MatchLocation()
+    {
+        Location location;
+        if (LookaheadFirst.TokenType == TokenType.CallTo) location           = Location.CallTo;
+        else if (LookaheadFirst.TokenType == TokenType.ExecutionOf) location = Location.ExecutionOf;
+        else throw ParserException(@"Supported locations include 'call-to' and 'execution-of'");
+
+        DiscardToken();
+        return new LocationNode(location);
+    }
+
+    private PlacementNode MatchPlacement()
+    {
+        Placement placement;
+        if (LookaheadFirst.TokenType == TokenType.Before) placement     = Placement.Before;
+        else if (LookaheadFirst.TokenType == TokenType.After) placement = Placement.After;
+        else throw ParserException(@"Supported placements include 'before' and 'after'");
+
+        DiscardToken();
+        return new PlacementNode(placement);
+    }
+
+    private StatementModificationNode MatchStatementModification()
+    {
+        var modificationType = MatchModificationType();
+        var syntaxDefinitionReference = MatchSyntaxDefinitionNodeReference();
+
+        DecoratorDefinitionNode decoratorDefinition = null;
+        if (LookaheadFirst.TokenType is TokenType.TaggedWith or TokenType.ImplementingInterface)
+        {
+            decoratorDefinition = MatchDecorator();
+        }
+        
+        return new StatementModificationNode
+        {
+            ModificationType                  = modificationType,
+            SyntaxDefinitionNodeReferenceNode = syntaxDefinitionReference,
+            DecoratorDefinition               = decoratorDefinition
+        };
+    }
+
+    private DecoratorDefinitionNode MatchDecorator()
+    {
+        if (LookaheadFirst.TokenType is TokenType.TaggedWith)
+        {
+            return MatchDecoratorDefinitionTagged();
+        }
+
+        if (LookaheadFirst.TokenType is TokenType.ImplementingInterface)
+        {
+            return MatchDecoratorDefinitionImplementing();
+        }
+
+        throw ParserException("A decorator can either be of type 'tagged-with' or 'implementing-interface'");
+    }
+
+    private DecoratorDefinitionImplementingNode MatchDecoratorDefinitionImplementing()
+    {
+        DiscardToken(TokenType.TaggedWith, "An implementing interface definition decorator must start with the 'implementing-interface' keyword");
+
+        ValidateToken(TokenType.ArbitraryWord, "The 'implementing-interface' keyword must be followed by an interface name");
+        var interfaceName = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new DecoratorDefinitionImplementingNode
+        {
+            InterfaceName = interfaceName
+        };
+    }
+
+    private DecoratorDefinitionTaggedNode MatchDecoratorDefinitionTagged()
+    {
+        DiscardToken(TokenType.TaggedWith, "A tagged with definition decorator must start with the 'tagged-with' keyword");
+
+        return new DecoratorDefinitionTaggedNode
+        {
+            SyntaxModifier = MatchSyntaxModifier()
+        };
+    }
+
+    private SyntaxModifierNode MatchSyntaxModifier()
+    {
         if (LookaheadFirst.TokenType == TokenType.OpenParenthesis)
         {
             DiscardToken();
-            modifierSyntax.Left = MatchModifierSyntax();
+
+            return new SyntaxModifierNode
+            {
+                Left = MatchSyntaxModifier()
+            };
         }
-        else if (LookaheadFirst.TokenType == TokenType.NotSymbol)
+
+        if (LookaheadFirst.TokenType == TokenType.NotSymbol)
         {
             DiscardToken();
-            modifierSyntax.Operator = ModifierOperator.Not;
-            modifierSyntax.Left     = MatchModifierSyntax();
+
+            return new SyntaxModifierNode
+            {
+                Operator = ModifierOperator.Not,
+                Left     = MatchSyntaxModifier()
+            };
         }
-        else if (LookaheadFirst.IsModifierOrVisibility() &&
-                 LookaheadSecond.TokenType is TokenType.OrSymbol or TokenType.AndSymbol)
+
+        if (LookaheadFirst.IsModifierOrVisibility())
         {
-            modifierSyntax.Left = new ModifierNode {ModifierName = LookaheadFirst.Value};
+            var modifierSyntax = new SyntaxModifierNode
+            {
+                Left = new ModifierNode {ModifierName = LookaheadFirst.Value}
+            };
             DiscardToken();
+
+            if (LookaheadFirst.TokenType is not (TokenType.OrSymbol or TokenType.AndSymbol))
+            {
+                return modifierSyntax;
+            }
 
             modifierSyntax.Operator = LookaheadFirst.TokenType == TokenType.AndSymbol
                 ? ModifierOperator.And
                 : ModifierOperator.Or;
             DiscardToken();
 
-            modifierSyntax.Right = MatchModifierSyntax();
-        }
-        else if (LookaheadFirst.IsModifierOrVisibility())
-        {
-            modifierSyntax.Left = new ModifierNode {ModifierName = LookaheadFirst.Value};
-            DiscardToken();
-        }
-        else
-        {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.OpenParenthesis}] or visibility expression but found: [{LookaheadFirst.Value}]");
+            modifierSyntax.Right = MatchSyntaxModifier();
         }
 
-        return modifierSyntax;
+        throw ParserException("Failed to parse tokens to formulate a valid syntax modifier condition");
     }
 
-    private IEnumerable<SelectorNode> MatchReturnSelector()
+    private SyntaxDefinitionNodeReference MatchSyntaxDefinitionNodeReference()
     {
-        var selectors = new List<SelectorNode>();
+        var contractSelector = MatchContractSelector();
 
-        if (LookaheadFirst.TokenType == TokenType.ReturningTypes)
+        SelectorNode functionSelector = null;
+        if (LookaheadFirst.TokenType is TokenType.FullStop)
         {
-            DiscardToken();
+            DiscardToken(TokenType.FullStop, "Contract selector and function selector must be seperated by the '.' character");
 
-            if (LookaheadFirst.TokenType == TokenType.OpenParenthesis)
-            {
-                var returnSelector = new SelectorFunctionReturnNode
-                {
-                    Returns = new List<string>()
-                };
-
-                DiscardToken();
-                while (LookaheadFirst.TokenType != TokenType.CloseParenthesis)
-                {
-                    if (LookaheadFirst.TokenType == TokenType.StringValue)
-                    {
-                        returnSelector.Returns.Add(LookaheadFirst.Value);
-
-                        DiscardToken();
-                    }
-
-                    if (LookaheadFirst.TokenType != TokenType.Comma &&
-                        LookaheadFirst.TokenType != TokenType.CloseParenthesis)
-                    {
-                        throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.Comma}] or [{TokenType.CloseParenthesis}] but found: [{LookaheadFirst.Value}]");
-                    }
-                }
-
-                DiscardToken();
-
-                selectors.Add(returnSelector);
-            }
-            else
-            {
-                throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.OpenParenthesis}] but found: [{LookaheadFirst.Value}]");
-            }
+            functionSelector = MatchFunctionSelector();
         }
 
-        selectors.AddRange(MatchInterfaceSelector());
-
-        return selectors;
-    }
-
-    private IEnumerable<SelectorNode> MatchInterfaceSelector()
-    {
-        var selectors = new List<SelectorNode>();
-
-        if (LookaheadFirst.TokenType is TokenType.InInterface or TokenType.NotInInterface)
+        return new SyntaxDefinitionNodeReference
         {
-            if (LookaheadSecond.TokenType == TokenType.StringValue)
-            {
-                var interfaceTagNode = new InterfaceTagNode
-                {
-                    Value = LookaheadFirst.TokenType == TokenType.InInterface
-                        ? InterfaceTag.InInterface
-                        : InterfaceTag.NotInInterface
-                };
-
-                var interfaceSelector = new SyntaxInterfaceNode
-                {
-                    InterfaceTagNode = interfaceTagNode,
-                    InterfaceSelector = new SelectorInterfaceFunctionNameNode(interfaceTagNode.Value)
-                    {
-                        InterfaceName = LookaheadSecond.Value
-                    }
-                };
-
-                DiscardToken();
-                DiscardToken();
-
-                selectors.Add(interfaceSelector);
-            }
-            else
-            {
-                throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
-            }
-        }
-
-        selectors.AddRange(MatchReturnSelector());
-
-        return selectors;
-    }
-
-    private SelectorVariableNode MatchVariableSelector()
-    {
-        // Step 1 - Parse variable syntax
-        var variableSelector = new SelectorVariableNode
-        {
-            VariableAccessNode = new VariableAccessNode {Value = LookaheadFirst.GetVariableAccess()}
+            ContractSelector = contractSelector,
+            FunctionSelector = functionSelector
         };
+    }
 
+    private SelectorNode MatchFunctionSelector()
+    {
+        if (LookaheadFirst.TokenType is TokenType.Wildcard)
+        {
+            return MatchSelectorWildcard(WildcardFor.Function);
+        }
+
+        if (LookaheadFirst.TokenType is TokenType.ArbitraryWord)
+        {
+            return MatchSelectorFunctionName();
+        }
+
+        throw ParserException("Function selector can either be of type wildcard or function name");
+    }
+
+    private SelectorFunctionNameNode MatchSelectorFunctionName()
+    {
+        if (LookaheadSecond.TokenType is TokenType.OpenParenthesis)
+        {
+            return MatchSelectorFunctionParameters();
+        }
+
+        ValidateToken(TokenType.ArbitraryWord, "Selector function name must start with a function name");
+        var functionName = LookaheadFirst.Value;
         DiscardToken();
 
-        // Step 2 - Parse variable type
-        if (LookaheadFirst.TokenType == TokenType.Wildcard)
+        return new SelectorFunctionNameNode
         {
-            variableSelector.VariableType = new SelectorWildcardNode
-            {
-                WildcardFor = variableSelector.VariableAccessNode.Value == VariableAccess.Get ? WildcardFor.VariableTypeGetter : WildcardFor.VariableTypeSetter
-            };
-            DiscardToken();
-        }
-        else if (LookaheadFirst.TokenType == TokenType.StringValue)
-        {
-            variableSelector.VariableType = new SelectorVariableTypeNode(variableSelector.VariableAccessNode.Value)
-            {
-                VariableType = LookaheadFirst.Value
-            };
-            DiscardToken();
-        }
-        else if (LookaheadFirst.TokenType == TokenType.OpenDoubleSquareBrackets)
-        {
-            DiscardToken();
-            if (LookaheadFirst.TokenType == TokenType.StringValue)
-            {
-                variableSelector.VariableType = new SelectorMappingNode {MappingName = LookaheadFirst.Value};
-                DiscardToken();
-                DiscardToken(TokenType.CloseDoubleSquareBrackets);
-            }
-            else
-            {
-                throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
-            }
-        }
-        else
-        {
-            throw new DslParserException(
-                ExceptionCode.InvalidToken, $"Expected [{TokenType.Wildcard}] or [{TokenType.StringValue}] or [{TokenType.OpenDoubleSquareBrackets}] but found: [{LookaheadFirst.Value}]");
-        }
-
-        // Step 3 - Parse variable location
-        variableSelector.VariableLocation = MatchContractSelector();
-        DiscardToken(TokenType.FullStop);
-
-        // Step 4 - Parse variable name
-        if (LookaheadFirst.TokenType == TokenType.Wildcard)
-        {
-            variableSelector.VariableNameSelector = new SelectorWildcardNode
-            {
-                WildcardFor = variableSelector.VariableAccessNode.Value == VariableAccess.Get ? WildcardFor.VariableNameGetter : WildcardFor.VariableNameSetter
-            };
-            DiscardToken();
-        }
-        else if (LookaheadFirst.TokenType == TokenType.StringValue)
-        {
-            DiscardToken();
-            if (LookaheadSecond.TokenType == TokenType.OpenSquareBrackets)
-            {
-                var dictionaryElementSelector = new SelectorVariableDictionaryElementNameNode(variableSelector.VariableAccessNode.Value)
-                {
-                    VariableName = LookaheadFirst.Value
-                };
-
-                DiscardToken();
-                DiscardToken();
-
-                if (LookaheadFirst.TokenType == TokenType.Wildcard)
-                {
-                    dictionaryElementSelector.KeySelector = new SelectorWildcardNode
-                    {
-                        WildcardFor = WildcardFor.DictionaryElement
-                    };
-                }
-                else if (LookaheadFirst.TokenType == TokenType.OpenSquareBrackets)
-                {
-                    DiscardToken();
-                    ValidateToken(TokenType.StringValue);
-
-                    dictionaryElementSelector.KeySelector = new SelectorMappingNode {MappingName = LookaheadFirst.Value};
-                    DiscardToken();
-
-                    DiscardToken(TokenType.CloseDoubleSquareBrackets);
-                }
-                else if (LookaheadFirst.TokenType == TokenType.StringValue)
-                {
-                    dictionaryElementSelector.KeySelector = new SelectorVariableConstantKeyNode {Constant = LookaheadFirst.Value};
-
-                    DiscardToken();
-                }
-
-                DiscardToken(TokenType.CloseSquareBrackets);
-            }
-            else if (LookaheadSecond.TokenType == TokenType.FullStop)
-            {
-                variableSelector.VariableNameSelector = MatchPropertySelector();
-            }
-            else
-            {
-                DiscardToken();
-
-                variableSelector.VariableNameSelector = new SelectorVariableNameNode(variableSelector.VariableAccessNode.Value)
-                {
-                    VariableName = LookaheadFirst.Value
-                };
-
-                DiscardToken();
-            }
-        }
-        else
-        {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.Wildcard}] or [{TokenType.StringValue}] but found: [{LookaheadFirst.Value}]");
-        }
-
-        // Step 5 - Parse variable decorator
-        if (LookaheadFirst.TokenType == TokenType.TaggedWith)
-        {
-            DiscardToken();
-            if (LookaheadFirst.TokenType is TokenType.Public or TokenType.Private or TokenType.Internal)
-            {
-                variableSelector.DecoratorVariable = new DecoratorVariableNode(variableSelector.VariableAccessNode.Value)
-                {
-                    VariableVisibility = LookaheadFirst.GetVariableVisibility()
-                };
-            }
-            else
-            {
-                throw new DslParserException(
-                    ExceptionCode.InvalidToken, $"Expected [{TokenType.Public}] or [{TokenType.Private}] or [{TokenType.Internal}] but found: [{LookaheadFirst.Value}]");
-            }
-        }
-        else
-        {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.TaggedWith}] but found: [{LookaheadFirst.Value}]");
-        }
-
-        return variableSelector;
+            FunctionName = functionName
+        };
     }
 
-    private SelectorVariablePropertyNameNode MatchPropertySelector()
+    private SelectorFunctionParametersNode MatchSelectorFunctionParameters()
     {
-        var propertySelector = new SelectorVariablePropertyNameNode
-        {
-            PropertyName = LookaheadFirst.Value
-        };
-
+        ValidateToken(TokenType.ArbitraryWord, "Selector function parameters must start with a function name");
+        var functionName = LookaheadFirst.Value;
         DiscardToken();
 
-        if (LookaheadFirst.TokenType == TokenType.FullStop)
+        DiscardToken(TokenType.OpenParenthesis, "Selector function parameters must be enclosed within '()' characters. '(' character missing");
+
+        var parameters = new List<ParameterNode>();
+        while(LookaheadFirst.TokenType is TokenType.ArbitraryWord)
         {
-            DiscardToken();
-            propertySelector.Child = MatchPropertySelector();
+            var parameter = MatchParameterNode();
+            parameters.Add(parameter);
+
+            if (LookaheadFirst.TokenType is not TokenType.CloseParenthesis && LookaheadFirst.TokenType is not TokenType.Comma)
+            {
+                throw ParserException("A comma must be inserted between parameter definitions");
+            }
         }
 
-        return propertySelector;
+        DiscardToken(TokenType.CloseParenthesis, "Selector function parameters must be enclosed within '()' characters. ')' character missing");
+
+        return new SelectorFunctionParametersNode
+        {
+            FunctionName = functionName,
+            Parameters   = parameters
+        };
     }
 
-    private StatementModificationNode MatchModificationStatement()
+    private ParameterNode MatchParameterNode()
     {
-        var modificationStatement = new StatementModificationNode();
+        ValidateToken(TokenType.ArbitraryWord, "A parameter node must start with a type");
+        var type = LookaheadFirst.Value;
+        DiscardToken();
 
-        if (LookaheadFirst.IsModificationType())
+        ValidateToken(TokenType.ArbitraryWord, "The type within a parameter node must be preceded by a name");
+        var name = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new ParameterNode
         {
-            modificationStatement.ModificationType = new ModificationTypeNode
-            {
-                Value = LookaheadFirst.GetModificationType()
-            };
-            DiscardToken();
+            Type = type,
+            Name = name
+        };
+    }
 
-            modificationStatement.SyntaxDefinitionNodeReferenceDefinitionNode = MatchReferenceDefinition();
-
-            if (LookaheadFirst.TokenType == TokenType.TaggedWith)
-            {
-                DiscardToken();
-                modificationStatement.DecoratorDefinition = new DecoratorDefinitionTaggedNode
-                {
-                    SyntaxModifier = MatchModifierSyntax()
-                };
-            }
-            else if (LookaheadFirst.TokenType == TokenType.ImplementingInterface && LookaheadSecond.TokenType == TokenType.StringValue)
-            {
-                DiscardToken();
-                modificationStatement.DecoratorDefinition = new DecoratorDefinitionImplementingNode
-                {
-                    InterfaceName = LookaheadFirst.Value
-                };
-            }
-        }
-        else
+    private SelectorNode MatchContractSelector()
+    {
+        if (LookaheadFirst.TokenType is TokenType.Wildcard)
         {
-            throw new DslParserException(ExceptionCode.InvalidToken, $"Expected [{TokenType.AddToDeclaration}] or [{TokenType.UpdateDefinition}] but found: [{LookaheadFirst.Value}]");
+            return MatchSelectorWildcard(WildcardFor.Contract);
         }
 
-        return modificationStatement;
+        if (LookaheadFirst.TokenType is TokenType.OpenDoubleSquareBrackets)
+        {
+            return MatchSelectorMapping();
+        }
+
+        if (LookaheadFirst.TokenType is TokenType.Address)
+        {
+            return MatchSelectorContractAddress();
+        }
+
+        if (LookaheadFirst.TokenType == TokenType.ArbitraryWord && LookaheadSecond.TokenType == TokenType.DoubleColon)
+        {
+            return MatchSelectorInterfaceContract();
+        }
+
+        if (LookaheadFirst.TokenType == TokenType.ArbitraryWord)
+        {
+            return MatchSelectorContractName();
+        }
+
+        throw ParserException("Contract selector can either be of type wildcard, mapping, address, interface or contract name");
+    }
+
+    private SelectorWildcardNode MatchSelectorWildcard(WildcardFor wildcardFor)
+    {
+        DiscardToken(TokenType.Wildcard, "A wildcard selector must start with the '*' symbol");
+
+        return new SelectorWildcardNode
+        {
+            WildcardFor = wildcardFor
+        };
+    }
+
+    private SelectorMappingNode MatchSelectorMapping()
+    {
+        DiscardToken(TokenType.OpenDoubleSquareBrackets, "Selector mapping must be enclosed within '[[]]' characters. '[[' character missing");
+
+        ValidateToken(TokenType.ArbitraryWord, "Mapping name missing for selector mapping");
+        var mappingName = LookaheadFirst.Value;
+        DiscardToken();
+
+        DiscardToken(TokenType.CloseDoubleSquareBrackets, "Selector mapping must be enclosed within '[[]]' characters. ']]' character missing");
+
+        return new SelectorMappingNode
+        {
+            MappingName = mappingName
+        };
+    }
+
+    private SelectorContractAddressNode MatchSelectorContractAddress()
+    {
+        ValidateToken(TokenType.Address, "Selector contract address must be an Ethereum address which starts with the characters '0x' and " +
+            "after contains 40 hexadecimal characters");
+        var contractAddress = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new SelectorContractAddressNode
+        {
+            ContractAddress = contractAddress
+        };
+    }
+
+    private SelectorInterfaceContractNode MatchSelectorInterfaceContract()
+    {
+        ValidateToken(TokenType.ArbitraryWord, "Selector interface contract must start with a contract name");
+        var contractName = LookaheadFirst.Value;
+        DiscardToken();
+
+        ValidateToken(TokenType.DoubleColon, "Contract name of a selector interface contract must be proceeded with the '::' character");
+
+        ValidateToken(TokenType.ArbitraryWord, "Selector interface contract must end with an interface name");
+        var interfaceName = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new SelectorInterfaceContractNode
+        {
+            ContractName  = contractName,
+            InterfaceName = interfaceName
+        };
+    }
+
+    private SelectorContractNameNode MatchSelectorContractName()
+    {
+        ValidateToken(TokenType.ArbitraryWord, "Selector contract name must start with a contract name");
+        var contractName = LookaheadFirst.Value;
+        DiscardToken();
+
+        return new SelectorContractNameNode
+        {
+            ContractName = contractName
+        };
+    }
+
+    private ModificationTypeNode MatchModificationType()
+    {
+        ModificationType modificationType;
+        if (LookaheadFirst.TokenType == TokenType.AddToDeclaration) modificationType      = ModificationType.AddToDeceleration;
+        else if (LookaheadFirst.TokenType == TokenType.UpdateDefinition) modificationType = ModificationType.UpdateDefinition;
+        else throw ParserException(@"Supported modification types are include 'add-to-declaration' and 'update-definition'");
+
+        DiscardToken();
+        return new ModificationTypeNode(modificationType);
     }
 }

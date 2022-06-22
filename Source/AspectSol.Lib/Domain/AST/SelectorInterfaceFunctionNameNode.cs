@@ -9,12 +9,7 @@ public class SelectorInterfaceFunctionNameNode : SelectorNode
 {
     public string InterfaceName { get; init; }
     
-    private InterfaceTag InterfaceTag { get; }
-    
-    public SelectorInterfaceFunctionNameNode(InterfaceTag interfaceTag)
-    {
-        InterfaceTag = interfaceTag;
-    }
+    public InterfaceTagNode InterfaceTagNode { get; init; }
 
     public override string ToString()
     {
@@ -33,7 +28,7 @@ public class SelectorInterfaceFunctionNameNode : SelectorNode
 
     public override SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
     {
-        var invert = InterfaceTag == InterfaceTag.NotInInterface;
+        var invert = InterfaceTagNode.Value == InterfaceTag.NotInInterface;
         
         var selectionResult = abstractFilteringService.FunctionFiltering.FilterFunctionsImplementedFromInterface(smartContract, InterfaceName, invert);
         return selectionResult;

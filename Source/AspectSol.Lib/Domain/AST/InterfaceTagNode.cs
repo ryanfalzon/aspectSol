@@ -5,7 +5,12 @@ namespace AspectSol.Lib.Domain.AST;
 
 public class InterfaceTagNode : Node
 {
-    public InterfaceTag Value { get; init; }
+    public InterfaceTag Value { get; }
+    
+    public InterfaceTagNode(InterfaceTag value)
+    {
+        Value = value;
+    }
 
     public override string ToString()
     {
