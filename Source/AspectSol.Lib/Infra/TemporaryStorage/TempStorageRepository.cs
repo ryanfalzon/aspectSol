@@ -6,15 +6,15 @@ public class TempStorageRepository
 {
     private const string Directory = "tmp/";
     
-    public static void Add(string content, out Guid filename)
+    public void Add(string content, out string filepath)
     {
         if (!System.IO.Directory.Exists(Directory))
         {
             System.IO.Directory.CreateDirectory(Directory);
         }
 
-        filename = Guid.NewGuid();
-        var filepath = ConstructFilepath(filename);
+        var filename = Guid.NewGuid();
+        filepath = ConstructFilepath(filename);
         
         using (FileStream fs = File.Create(filepath))
         {
@@ -23,16 +23,21 @@ public class TempStorageRepository
         }
     }
 
-    public static void Delete(Guid filename)
+    public void Delete(Guid filename)
     {
         var filepath = ConstructFilepath(filename);
+        Delete(filepath);
+    }
+
+    public void Delete(string filepath)
+    {
         if (File.Exists(filepath))
         {
             File.Delete(filepath);
         }
     }
 
-    private static string ConstructFilepath(Guid filename)
+    private string ConstructFilepath(Guid filename)
     {
         return $"{Directory}{filename}.txt";
     }

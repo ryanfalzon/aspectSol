@@ -10,25 +10,29 @@ public class TempStorageRepositoryTests
 {
     [TestMethod]
     [DataRow("Some test data for testing.")]
-    public void WhenCallingAdd_ShouldCreateNewFile(string content)
+    public void GivenATemporaryStorageRepository_WhenCallingAdd_ShouldCreateNewFile(string content)
     {
+        // Given
+        var givenTempStorageRepository = new TempStorageRepository();
+        
         // When
-        TempStorageRepository.Add(content, out Guid filename);
+        givenTempStorageRepository.Add(content, out var filepath);
         
         // Should
-        Assert.IsTrue(File.Exists($"tmp/{filename}.txt"));
+        Assert.IsTrue(File.Exists(filepath));
     }
 
     [TestMethod]
     public void GivenTempFile_WhenCallingDelete_ShouldRemoveFile()
     {
         // Given
-        TempStorageRepository.Add("Some Content", out Guid filename);
+        var givenTempStorageRepository = new TempStorageRepository();
+        givenTempStorageRepository.Add("Some Content", out var filepath);
         
         // When
-        TempStorageRepository.Delete(filename);
+        givenTempStorageRepository.Delete(filepath);
         
         // Should
-        Assert.IsFalse(File.Exists($"tmp/{filename}.txt"));
+        Assert.IsFalse(File.Exists(filepath));
     }
 }

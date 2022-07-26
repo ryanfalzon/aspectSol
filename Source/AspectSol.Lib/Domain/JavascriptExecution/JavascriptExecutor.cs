@@ -18,4 +18,14 @@ public class JavascriptExecutor : IJavascriptExecutor
         var script = await _scriptFactory.GetScript(scriptName);
         return await _nodeJsService.InvokeFromStringAsync<string>(script, args: arguments);
     }
+
+    public async Task<string> GenerateAst(string fileName)
+    {
+        return await Execute("generateAst", new object[] {fileName});
+    }
+
+    public async Task<string> GenerateCode(object[] arguments)
+    {
+        return await Execute("generateCode", arguments);
+    }
 }

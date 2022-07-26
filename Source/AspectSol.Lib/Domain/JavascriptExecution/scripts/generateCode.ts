@@ -1,4 +1,4 @@
-﻿import { ASTReader, ASTWriter, DefaultASTWriterMapping, LatestCompilerVersion, PrettyFormatter } from "solc-typed-ast";
+﻿import { ASTReader, ASTWriter, ASTNodeWriter, DefaultASTWriterMapping, LatestCompilerVersion, PrettyFormatter } from "solc-typed-ast";
 
 var generateCode = async function (callback: (error: any, result: any) => void, compileResultData: any) {
     try {

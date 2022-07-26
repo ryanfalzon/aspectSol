@@ -1,7 +1,9 @@
 ﻿using AspectSol.Lib.App;
+using AspectSol.Lib.Domain.Interpreter;
 using AspectSol.Lib.Domain.JavascriptExecution;
-using AspectSol.Lib.Domain.Parsing;
-using AspectSol.Lib.Domain.Tokenization;
+using AspectSol.Lib.Domain.Parser;
+using AspectSol.Lib.Domain.Tokenizer;
+using AspectSol.Lib.Infra.TemporaryStorage;
 using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,9 +17,11 @@ public static class AspectSolCollectionExtensions
 
         services.AddScoped<ITokenizer, Tokenizer>();
         services.AddScoped<IParser, Parser>();
+        services.AddScoped<IInterpreter, Interpreter>();
 
         services.AddNodeJS();
         services.AddScoped<ScriptFactory>();
+        services.AddScoped<TempStorageRepository>();
         services.AddScoped<IJavascriptExecutor, JavascriptExecutor>();
 
         services.AddSolidityFilteringConfig();

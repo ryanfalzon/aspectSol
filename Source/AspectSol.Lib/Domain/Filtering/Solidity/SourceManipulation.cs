@@ -1,4 +1,5 @@
 ﻿using AspectSol.Lib.Infra.Extensions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
@@ -40,37 +41,64 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void AddDefinitionToContract(ref JToken source, JToken definition, SelectionResult selectionResult)
+    public void AddDefinitionToContract(ref JToken contract, JToken definition, SelectionResult selectionResult, bool addFirst = true)
     {
         foreach (var interestedContract in selectionResult.InterestedContracts)
         {
-            if (source["nodes"] is JArray nodes)
+            if (contract["nodes"] is JArray nodes)
             {
                 foreach (var child in nodes.Children())
                 {
                     if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") && child["name"].Matches(interestedContract))
                     {
-                        var baseContracts = child["nodes"] as JArray;
-                        baseContracts?.AddFirst(definition);
+                        var baseContracts = child["nodes"] as JArray ?? new JArray();
+
+                        var newChildNodes = new JArray();
+                        if (addFirst)
+                        {
+                            foreach (var newSubNode in GetContractSubNodes(definition))
+                            {
+                                newChildNodes.Add(newSubNode);
+                            }
+
+                            foreach (var baseContract in baseContracts)
+                            {
+                                newChildNodes.Add(baseContract);
+                            }
+                        }
+                        else
+                        {
+                            foreach (var baseContract in baseContracts)
+                            {
+                                newChildNodes.Add(baseContract);
+                            }
+                            
+                            foreach (var newSubNode in GetContractSubNodes(definition))
+                            {
+                                newChildNodes.Add(newSubNode);
+                            }
+                        }
+                        
+                        child["nodes"]?.Replace(newChildNodes);
                     }
                 }
             }
         }
     }
 
-    public void AddDefinitionsToContract(ref JToken source, List<JToken> definitions, SelectionResult selectionResult)
+    public void AddDefinitionsToContract(ref JToken contract, List<JToken> definitions, SelectionResult selectionResult, bool addFirst = true)
     {
         foreach (var definition in definitions)
         {
-            AddDefinitionToContract(ref source, definition, selectionResult);
+            AddDefinitionToContract(ref contract, definition, selectionResult, addFirst);
         }
     }
 
-    public void AddDefinitionToFunction(ref JToken source, JToken definition, SelectionResult selectionResult)
+    public void AddDefinitionToFunction(ref JToken contract, JToken definition, SelectionResult selectionResult, bool addFirst = true)
     {
         foreach (var interestedFunctions in selectionResult.InterestedFunctions)
         {
-            if (source["nodes"] is JArray nodes)
+            if (contract["nodes"] is JArray nodes)
             {
                 foreach (var child in nodes.Children())
                 {
@@ -84,8 +112,35 @@ public class SourceManipulation : ISourceManipulation
                             if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
                                 subNode["name"].Matches(interestedFunctions.Key))
                             {
-                                var statements = subNode["body"]["statements"] as JArray;
-                                statements?.AddFirst(definition);
+                                var statements = subNode["body"]?["statements"] as JArray ?? new JArray();
+                                
+                                var newChildNodes = new JArray();
+                                if (addFirst)
+                                {
+                                    foreach (var newSubNode in GetFunctionSubNodes(definition))
+                                    {
+                                        newChildNodes.Add(newSubNode);
+                                    }
+
+                                    foreach (var statement in statements)
+                                    {
+                                        newChildNodes.Add(statement);
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var statement in statements)
+                                    {
+                                        newChildNodes.Add(statement);
+                                    }
+                            
+                                    foreach (var newSubNode in GetFunctionSubNodes(definition))
+                                    {
+                                        newChildNodes.Add(newSubNode);
+                                    }
+                                }
+                        
+                                subNode["body"]?["statements"]?.Replace(newChildNodes);
                             }
                         }
                     }
@@ -94,11 +149,11 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void AddDefinitionsToFunction(ref JToken source, List<JToken> definitions, SelectionResult selectionResult)
+    public void AddDefinitionsToFunction(ref JToken source, List<JToken> definitions, SelectionResult selectionResult, bool addFirst = true)
     {
         foreach (var definition in definitions)
         {
-            AddDefinitionToFunction(ref source, definition, selectionResult);
+            AddDefinitionToFunction(ref source, definition, selectionResult, addFirst);
         }
     }
 
@@ -171,5 +226,45 @@ public class SourceManipulation : ISourceManipulation
                 }
             }
         }
+    }
+    
+    private List<JToken> GetContractSubNodes(JToken contract)
+    {
+        if (contract["nodes"] is JArray nodes)
+        {
+            foreach (var child in nodes.Children())
+            {
+                if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract"))
+                {
+                    return child["nodes"].ToSafeList();
+                }
+            }
+        }
+
+        return new List<JToken>();
+    }
+
+    private List<JToken> GetFunctionSubNodes(JToken contract)
+    {
+        if (contract["nodes"] is JArray nodes)
+        {
+            foreach (var child in nodes.Children())
+            {
+                if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract"))
+                {
+                    var subNodes = child["nodes"].ToSafeList();
+
+                    foreach (var subNode in subNodes)
+                    {
+                        if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
+                        {
+                            return subNode["body"]?["statements"].ToSafeList();
+                        }
+                    }
+                }
+            }
+        }
+        
+        return new List<JToken>();
     }
 }

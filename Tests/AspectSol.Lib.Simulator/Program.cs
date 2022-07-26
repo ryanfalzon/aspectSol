@@ -1,5 +1,4 @@
-﻿using AspectSol.Lib.Domain.Parsing;
-using AspectSol.Lib.Domain.Tokenization;
+﻿using AspectSol.Lib.App;
 using AspectSol.Lib.Infra.ServiceCollectionExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -8,13 +7,11 @@ namespace AspectSol.Lib.Simulator;
 
 public class Program
 {
-    private readonly ITokenizer _tokenizer;
-    private readonly IParser _parser;
+    private readonly AppService _appService;
 
-    public Program(ITokenizer tokenizer, IParser parser)
+    public Program(AppService appService)
     {
-        _tokenizer = tokenizer;
-        _parser    = parser;
+        _appService = appService;
     }
 
     public static void Main(string[] args)
@@ -28,24 +25,32 @@ public class Program
         var script = @"
 aspect SafeReenentrancy {
 	add-to-declaration * ¬{ 
-		private bool running = false; 
+		bool private running = false; 
 	}¬
 
 	before execution-of *.* ¬{ 
 		require (!running); 
 	}¬
-	
-	before call-to *.transfer() ¬{ 
-		running = true; 
-	}¬
-	
-	after call-to *.transfer() ¬{ 
-		running = false; 
-	}¬
 }";
+        
+        var smartContract = @"
+pragma solidity >=0.7.0 <0.9.0;
 
-        var tokens = _tokenizer.Tokenize(script);
-        var ast = _parser.Parse(tokens);
+contract CustomToken {
+
+    uint256 private balance;
+
+    function getBalance() public view returns(uint256) {
+        return balance;
+    }
+
+    function setbalance(uint256 b) public {
+        balance = b;
+    }
+}";
+        
+        var newSmartContract = _appService.Execute(script, smartContract);
+        Console.WriteLine(newSmartContract);
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args)
@@ -55,6 +60,7 @@ aspect SafeReenentrancy {
             {
                 services.AddTransient<Program>();
                 services.AddAspectSolServiceConfig();
+                services.AddSolidityFilteringConfig();
             });
     }
 }

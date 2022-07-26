@@ -2,21 +2,33 @@
 
 public class SolidityPlaceholderFactory
 {
-    private const string StatementsPlaceholder =
-        "pragma solidity >=0.7.0 <0.9.0;" +
-        "contract TestContract {" +
-        "   function TestFunction() public {" +
-        "       {Statements}" +
-        "   }" +
+    private const string ContractStatementsPlaceholder =
+        "pragma solidity >=0.7.0 <0.9.0;\n" +
+        "contract TestContract {\n" +
+        "   {ContractStatements}\n" +
         "}";
+    
+    private const string FunctionStatementsPlaceholder =
+        "pragma solidity >=0.7.0 <0.9.0;\n" +
+        "contract TestContract {\n" +
+        "   {ContractStatements}\n" +
+        "   function TestFunction() public {\n" +
+        "       {FunctionStatements}\n" +
+        "   }\n" +
+        "}";
+    
+    private static readonly List<string> _contractStatementCache = new();
 
-    public static string GetStatementPlaceholder(string statement)
+    public static string GetContractStatementPlaceholder(string statement)
     {
-        return StatementsPlaceholder.Replace("{Statements}", statement);
+        _contractStatementCache.Add(statement);
+        return ContractStatementsPlaceholder.Replace("{ContractStatements}", statement);
     }
 
-    public static string GetStatementsPlaceholder(IEnumerable<string> statements)
+    public static string GetFunctionStatementPlaceholder(string statement)
     {
-        return StatementsPlaceholder.Replace("{Statements}", string.Join('\n', statements));
+        return FunctionStatementsPlaceholder
+            .Replace("{ContractStatements}", string.Join('\n', _contractStatementCache))
+            .Replace("{FunctionStatements}", statement);
     }
 }

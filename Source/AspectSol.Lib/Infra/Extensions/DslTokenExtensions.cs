@@ -1,4 +1,4 @@
-﻿using AspectSol.Lib.Domain.Tokenization;
+﻿using AspectSol.Lib.Domain.Tokenizer;
 
 namespace AspectSol.Lib.Infra.Extensions;
 

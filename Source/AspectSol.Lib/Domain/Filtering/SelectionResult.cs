@@ -20,5 +20,17 @@ public class SelectionResult
     /// <summary>
     /// Key is composed of the function index, the statement index and the argument index if any. The value is the function name of where the statement resides
     /// </summary>
-    public Dictionary<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string> InterestedStatements { get; init; }
+    public Dictionary<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string> InterestedStatements
+    {
+        get;
+        init;
+    }
+
+    public SelectionResult()
+    {
+        InterestedContracts = new List<string>();
+        InterestedFunctions = new Dictionary<string, string>();
+        InterestedDefinitions = new Dictionary<string, string>();
+        InterestedStatements = new Dictionary<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int? ArgumentIndex), string>();
+    }
 }
