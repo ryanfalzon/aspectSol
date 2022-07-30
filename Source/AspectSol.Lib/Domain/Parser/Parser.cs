@@ -1,8 +1,11 @@
 ﻿using AspectSol.Lib.Domain.Ast;
+using AspectSol.Lib.Domain.Ast.Locations;
 using AspectSol.Lib.Domain.Ast.Modifications;
 using AspectSol.Lib.Domain.Ast.Placements;
 using AspectSol.Lib.Domain.Ast.Selectors;
+using AspectSol.Lib.Domain.Ast.Selectors.Function;
 using AspectSol.Lib.Domain.Ast.Statements;
+using AspectSol.Lib.Domain.Ast.Syntax;
 using AspectSol.Lib.Domain.Tokenizer;
 using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Extensions;
@@ -35,7 +38,7 @@ public class Parser : AbstractParser, IParser
         {
             statements.Add(MatchStatement());
         }
-        
+
         DiscardToken(TokenType.CloseScope, "Aspect must be enclosed within '{}' characters. '}' character missing");
 
         return new AspectNode
@@ -98,7 +101,7 @@ public class Parser : AbstractParser, IParser
 
         return new SenderNode
         {
-            SyntaxDefinitionNodeReference = MatchSyntaxDefinitionNodeReference()
+            ReferenceSyntaxDefinitionNode = MatchSyntaxDefinitionNodeReference()
         };
     }
 
@@ -336,7 +339,7 @@ public class Parser : AbstractParser, IParser
         DiscardToken(TokenType.OpenParenthesis, "Selector function returns must be enclosed within '()' characters. '(' character missing");
 
         var returns = new List<string>();
-        while(LookaheadFirst.TokenType is TokenType.ArbitraryWord)
+        while (LookaheadFirst.TokenType is TokenType.ArbitraryWord)
         {
             returns.Add(LookaheadFirst.Value);
 
@@ -357,13 +360,13 @@ public class Parser : AbstractParser, IParser
     private SelectorDefinitionNode MatchSelectorDefinition()
     {
         var syntaxDefinition = MatchSyntaxDefinitionNodeReference();
-        
+
         DecoratorDefinitionNode decoratorDefinition = null;
         if (LookaheadFirst.TokenType is TokenType.TaggedWith or TokenType.ImplementingInterface)
         {
             decoratorDefinition = MatchDecorator();
         }
-        
+
         return new SelectorDefinitionNode
         {
             SyntaxDefinition    = syntaxDefinition,
@@ -373,13 +376,13 @@ public class Parser : AbstractParser, IParser
 
     private LocationNode MatchLocation()
     {
-        Location location;
-        if (LookaheadFirst.TokenType == TokenType.CallTo) location           = Location.CallTo;
-        else if (LookaheadFirst.TokenType == TokenType.ExecutionOf) location = Location.ExecutionOf;
+        LocationNode location;
+        if (LookaheadFirst.TokenType == TokenType.CallTo) location           = new CallToNode();
+        else if (LookaheadFirst.TokenType == TokenType.ExecutionOf) location = new ExecutionOfNode();
         else throw ParserException(@"Supported locations include 'call-to' and 'execution-of'");
 
         DiscardToken();
-        return new LocationNode(location);
+        return location;
     }
 
     private PlacementNode MatchPlacement()
@@ -403,11 +406,11 @@ public class Parser : AbstractParser, IParser
         {
             decoratorDefinition = MatchDecorator();
         }
-        
+
         return new ModificationStatementNode
         {
-            Modification                  = modificationType,
-            SyntaxDefinitionNodeReferenceNode = syntaxDefinitionReference,
+            Modification                      = modificationType,
+            ReferenceSyntaxDefinitionNodeNode = syntaxDefinitionReference,
             DecoratorDefinition               = decoratorDefinition
         };
     }
@@ -498,7 +501,7 @@ public class Parser : AbstractParser, IParser
         throw ParserException("Failed to parse tokens to formulate a valid syntax modifier condition");
     }
 
-    private SyntaxDefinitionNodeReference MatchSyntaxDefinitionNodeReference()
+    private ReferenceSyntaxDefinitionNode MatchSyntaxDefinitionNodeReference()
     {
         var contractSelector = MatchContractSelector();
 
@@ -510,7 +513,7 @@ public class Parser : AbstractParser, IParser
             functionSelector = MatchFunctionSelector();
         }
 
-        return new SyntaxDefinitionNodeReference
+        return new ReferenceSyntaxDefinitionNode
         {
             ContractSelector = contractSelector,
             FunctionSelector = functionSelector
@@ -532,7 +535,7 @@ public class Parser : AbstractParser, IParser
         throw ParserException("Function selector can either be of type wildcard or function name");
     }
 
-    private SelectorFunctionNameNode MatchSelectorFunctionName()
+    private FunctionNameSelectorNode MatchSelectorFunctionName()
     {
         if (LookaheadSecond.TokenType is TokenType.OpenParenthesis)
         {
@@ -543,13 +546,13 @@ public class Parser : AbstractParser, IParser
         var functionName = LookaheadFirst.Value;
         DiscardToken();
 
-        return new SelectorFunctionNameNode
+        return new FunctionNameSelectorNode
         {
             FunctionName = functionName
         };
     }
 
-    private SelectorFunctionParametersNode MatchSelectorFunctionParameters()
+    private FunctionNameSelectorFunctionParametersNode MatchSelectorFunctionParameters()
     {
         ValidateToken(TokenType.ArbitraryWord, "Selector function parameters must start with a function name");
         var functionName = LookaheadFirst.Value;
@@ -558,7 +561,7 @@ public class Parser : AbstractParser, IParser
         DiscardToken(TokenType.OpenParenthesis, "Selector function parameters must be enclosed within '()' characters. '(' character missing");
 
         var parameters = new List<ParameterNode>();
-        while(LookaheadFirst.TokenType is TokenType.ArbitraryWord)
+        while (LookaheadFirst.TokenType is TokenType.ArbitraryWord)
         {
             var parameter = MatchParameterNode();
             parameters.Add(parameter);
@@ -571,7 +574,7 @@ public class Parser : AbstractParser, IParser
 
         DiscardToken(TokenType.CloseParenthesis, "Selector function parameters must be enclosed within '()' characters. ')' character missing");
 
-        return new SelectorFunctionParametersNode
+        return new FunctionNameSelectorFunctionParametersNode
         {
             FunctionName = functionName,
             Parameters   = parameters
@@ -698,7 +701,7 @@ public class Parser : AbstractParser, IParser
     private ModificationNode MatchModificationType()
     {
         ModificationNode modification;
-        if (LookaheadFirst.TokenType == TokenType.AddToDeclaration) modification = new AddModificationNode();
+        if (LookaheadFirst.TokenType == TokenType.AddToDeclaration) modification      = new AddModificationNode();
         else if (LookaheadFirst.TokenType == TokenType.UpdateDefinition) modification = new UpdateModificationNode();
         else throw ParserException(@"Supported modification types are include 'add-to-declaration' and 'update-definition'");
 

@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast;
@@ -24,9 +25,9 @@ public class SelectorContractNameNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
     {
-        var selectionResult = abstractFilteringService.ContractFiltering.FilterContractsByContractName(smartContract, ContractName);
-        return selectionResult;
+        var filteringResult = abstractFilteringService.ContractFiltering.FilterContractsByContractName(smartContract, ContractName);
+        return filteringResult;
     }
 }

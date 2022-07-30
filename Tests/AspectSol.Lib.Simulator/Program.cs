@@ -17,10 +17,10 @@ public class Program
     public static void Main(string[] args)
     {
         var host = CreateHostBuilder(args).Build();
-        host.Services.GetRequiredService<Program>().RunAsync();
+        host.Services.GetRequiredService<Program>().Run();
     }
 
-    private void RunAsync()
+    private void Run()
     {
         var script = @"
 aspect SafeReenentrancy {
@@ -30,6 +30,14 @@ aspect SafeReenentrancy {
 
 	before execution-of *.* ¬{ 
 		require (!running); 
+	}¬
+	
+	before call-to *.setBalance() ¬{ 
+		running = true; 
+	}¬
+	
+	after call-to *.setBalance() ¬{ 
+		running = false; 
 	}¬
 }";
         

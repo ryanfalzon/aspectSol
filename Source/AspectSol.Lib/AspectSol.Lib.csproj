@@ -30,7 +30,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Domain\Ast\Selectors\Contract" />
-	  <Folder Include="Domain\Ast\Selectors\Function" />
 	</ItemGroup>
 
 </Project>

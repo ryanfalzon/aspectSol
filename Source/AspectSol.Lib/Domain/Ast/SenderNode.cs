@@ -1,10 +1,11 @@
 ﻿using System.Text;
+using AspectSol.Lib.Domain.Ast.Syntax;
 
 namespace AspectSol.Lib.Domain.Ast;
 
 public class SenderNode : Node
 {
-    public SyntaxDefinitionNodeReference SyntaxDefinitionNodeReference { get; init; }
+    public ReferenceSyntaxDefinitionNode ReferenceSyntaxDefinitionNode { get; init; }
 
     public override string ToString()
     {
@@ -13,7 +14,7 @@ public class SenderNode : Node
         stringBuilder.AppendLine($"{GetIndentation()}<{nameof(SenderNode)}>");
         IncreaseIndentation();
 
-        stringBuilder.AppendLine(SyntaxDefinitionNodeReference.ToString());
+        stringBuilder.AppendLine(ReferenceSyntaxDefinitionNode.ToString());
 
         DecreaseIndentation();
         stringBuilder.AppendLine($"{GetIndentation()}</{nameof(SenderNode)}>");

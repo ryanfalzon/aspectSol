@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using AspectSol.Lib.Domain.Filtering.Solidity;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -15,8 +16,9 @@ public class VariableDefinitionFilteringTests : SolidityFilteringTests
     {
         var transformer = new VariableDefinitionFiltering();
         var result = transformer.FilterVariableDefinitionByVariableType(ContractAst, variableType);
+        var interestedDefinitions = result.ContractFilteringResults.Sum(x => x.DefinitionFilteringResults.Count);
 
-        Assert.AreEqual(expectedCount, result.InterestedDefinitions.Count);
+        Assert.AreEqual(expectedCount, interestedDefinitions);
     }
 
     [TestMethod]
@@ -24,8 +26,9 @@ public class VariableDefinitionFilteringTests : SolidityFilteringTests
     {
         var transformer = new VariableDefinitionFiltering();
         var result = transformer.FilterVariableDefinitionByVariableType(ContractAst, WildcardToken);
+        var interestedDefinitions = result.ContractFilteringResults.Sum(x => x.DefinitionFilteringResults.Count);
 
-        Assert.AreEqual(TotalVariableDefinitions, result.InterestedDefinitions.Count);
+        Assert.AreEqual(TotalVariableDefinitions, interestedDefinitions);
     }
 
     [TestMethod]
@@ -41,9 +44,10 @@ public class VariableDefinitionFilteringTests : SolidityFilteringTests
     public void FilterVariableDefinitionByVariableName(string variableName, int expectedCount)
     {
         var transformer = new VariableDefinitionFiltering();
-
         var result = transformer.FilterVariableDefinitionByVariableName(ContractAst, variableName);
-        Assert.AreEqual(expectedCount, result.InterestedDefinitions.Count);
+        var interestedDefinitions = result.ContractFilteringResults.Sum(x => x.DefinitionFilteringResults.Count);
+        
+        Assert.AreEqual(expectedCount, interestedDefinitions);
     }
 
     [TestMethod]
@@ -51,8 +55,9 @@ public class VariableDefinitionFilteringTests : SolidityFilteringTests
     {
         var transformer = new VariableDefinitionFiltering();
         var result = transformer.FilterVariableDefinitionByVariableName(ContractAst, WildcardToken);
+        var interestedDefinitions = result.ContractFilteringResults.Sum(x => x.DefinitionFilteringResults.Count);
 
-        Assert.AreEqual(TotalVariableDefinitions, result.InterestedDefinitions.Count);
+        Assert.AreEqual(TotalVariableDefinitions, interestedDefinitions);
     }
 
     [TestMethod]

@@ -29,7 +29,7 @@ public class Tokenizer : AbstractTokenizer, ITokenizer
             new(TokenType.After, new Regex("^after")),
             new(TokenType.Pure, new Regex("^pure")),
             new(TokenType.View, new Regex("^view")),
-            new(TokenType.Get, new Regex("^get")),
+            new(TokenType.Get, new Regex("^get\\s")),
             new(TokenType.Set, new Regex("^set")),
             new(TokenType.Aspect, new Regex("^aspect")),
             

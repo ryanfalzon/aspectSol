@@ -1,4 +1,5 @@
-﻿using AspectSol.Lib.Infra.Extensions;
+﻿using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Extensions;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
@@ -19,34 +20,34 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="functionName"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByFunctionName(JToken jToken, string functionName)
+    public FilteringResult FilterFunctionsByFunctionName(JToken jToken, string functionName)
     {
-        if (string.IsNullOrWhiteSpace(functionName))
-            throw new ArgumentNullException(nameof(functionName));
+        if (string.IsNullOrWhiteSpace(functionName)) throw new ArgumentNullException(nameof(functionName));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") && (functionName.Equals(Wildcard) || subNode["name"].Matches(functionName)))
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
+                        (functionName.Equals(Wildcard) || subNode["name"].Matches(functionName)))
                     {
-                        interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        filteringResult.AddFunction(contractName, currentFunctionName);
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -56,34 +57,34 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="visibility"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByVisibility(JToken jToken, string visibility)
+    public FilteringResult FilterFunctionsByVisibility(JToken jToken, string visibility)
     {
-        if (string.IsNullOrWhiteSpace(visibility))
-            throw new ArgumentNullException(nameof(visibility));
+        if (string.IsNullOrWhiteSpace(visibility)) throw new ArgumentNullException(nameof(visibility));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") && (visibility.Equals(Wildcard) || subNode["visibility"].Matches(visibility)))
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
+                        (visibility.Equals(Wildcard) || subNode["visibility"].Matches(visibility)))
                     {
-                        interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        filteringResult.AddFunction(contractName, currentFunctionName);
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -93,34 +94,34 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="stateMutability"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByStateMutability(JToken jToken, string stateMutability)
+    public FilteringResult FilterFunctionsByStateMutability(JToken jToken, string stateMutability)
     {
-        if (string.IsNullOrWhiteSpace(stateMutability))
-            throw new ArgumentNullException(nameof(stateMutability));
+        if (string.IsNullOrWhiteSpace(stateMutability)) throw new ArgumentNullException(nameof(stateMutability));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
-                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") && (stateMutability.Equals(Wildcard) || subNode["stateMutability"].Matches(stateMutability)))
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
+                        (stateMutability.Equals(Wildcard) || subNode["stateMutability"].Matches(stateMutability)))
                     {
-                        interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        filteringResult.AddFunction(contractName, currentFunctionName);
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -130,16 +131,17 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="modifiers"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByAllModifiers(JToken jToken, List<string> modifiers)
+    public FilteringResult FilterFunctionsByAllModifiers(JToken jToken, List<string> modifiers)
     {
-        if (modifiers == null || modifiers.Count == 0)
-            throw new ArgumentNullException(nameof(modifiers));
+        if (modifiers == null || modifiers.Count == 0) throw new ArgumentNullException(nameof(modifiers));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -150,7 +152,7 @@ public class FunctionFiltering : IFunctionFiltering
                     {
                         var functionModifiers = subNode["modifiers"].ToSafeList();
 
-                        bool allMatch = true;
+                        var allMatch = true;
                         foreach (var modifier in modifiers)
                         {
                             allMatch = functionModifiers.Exists(functionModifier => functionModifier["modifierName"]["name"].Matches(modifier));
@@ -163,17 +165,15 @@ public class FunctionFiltering : IFunctionFiltering
 
                         if (allMatch)
                         {
-                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                            filteringResult.AddFunction(contractName, currentFunctionName);
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -183,16 +183,17 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="modifiers"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByEitherModifiers(JToken jToken, List<string> modifiers)
+    public FilteringResult FilterFunctionsByEitherModifiers(JToken jToken, List<string> modifiers)
     {
-        if (modifiers == null || modifiers.Count == 0)
-            throw new ArgumentNullException(nameof(modifiers));
+        if (modifiers == null || modifiers.Count == 0) throw new ArgumentNullException(nameof(modifiers));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -203,7 +204,7 @@ public class FunctionFiltering : IFunctionFiltering
                     {
                         var functionModifiers = subNode["modifiers"].ToSafeList();
 
-                        bool foundMatch = false;
+                        var foundMatch = false;
                         foreach (var modifier in modifiers)
                         {
                             foundMatch = functionModifiers.Exists(functionModifier => functionModifier["modifierName"]["name"].Matches(modifier));
@@ -216,17 +217,15 @@ public class FunctionFiltering : IFunctionFiltering
 
                         if (foundMatch)
                         {
-                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                            filteringResult.AddFunction(contractName, currentFunctionName);
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -237,16 +236,17 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="invert"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByModifier(JToken jToken, string modifier, bool invert)
+    public FilteringResult FilterFunctionsByModifier(JToken jToken, string modifier, bool invert)
     {
-        if (string.IsNullOrWhiteSpace(modifier))
-            throw new ArgumentNullException(nameof(modifier));
+        if (string.IsNullOrWhiteSpace(modifier)) throw new ArgumentNullException(nameof(modifier));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -257,7 +257,7 @@ public class FunctionFiltering : IFunctionFiltering
                     {
                         var functionModifiers = subNode["modifiers"].ToSafeList();
 
-                        bool foundMatch = false;
+                        var foundMatch = false;
                         if (functionModifiers.Count == 0 && invert)
                         {
                             foundMatch = true;
@@ -266,7 +266,7 @@ public class FunctionFiltering : IFunctionFiltering
                         {
                             foreach (var functionModifier in functionModifiers)
                             {
-                                foundMatch = invert ^ functionModifier["modifierName"]["name"].Matches(modifier);
+                                foundMatch = invert ^ functionModifier["modifierName"]?["name"].Matches(modifier) ?? false;
 
                                 if (foundMatch)
                                 {
@@ -277,17 +277,15 @@ public class FunctionFiltering : IFunctionFiltering
 
                         if (foundMatch)
                         {
-                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                            filteringResult.AddFunction(contractName, currentFunctionName);
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -298,18 +296,18 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="parameterName"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByParameters(JToken jToken, string parameterType, string parameterName)
+    public FilteringResult FilterFunctionsByParameters(JToken jToken, string parameterType, string parameterName)
     {
-        if (string.IsNullOrWhiteSpace(parameterType))
-            throw new ArgumentNullException(nameof(parameterType));
-        if (string.IsNullOrWhiteSpace(parameterName))
-            throw new ArgumentNullException(nameof(parameterName));
+        if (string.IsNullOrWhiteSpace(parameterType)) throw new ArgumentNullException(nameof(parameterType));
+        if (string.IsNullOrWhiteSpace(parameterName)) throw new ArgumentNullException(nameof(parameterName));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -318,13 +316,13 @@ public class FunctionFiltering : IFunctionFiltering
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionParameters = subNode["parameters"]["parameters"].ToSafeList();
+                        var functionParameters = subNode["parameters"]?["parameters"].ToSafeList() ?? new List<JToken>();
 
-                        bool isMatch = false;
+                        var isMatch = false;
                         foreach (var functionParameter in functionParameters)
                         {
                             if (functionParameter["nodeType"].Matches(VariableDeclaration) &&
-                                functionParameter["typeName"]["name"].Matches(parameterType) && functionParameter["name"].Matches(parameterName))
+                                (functionParameter["typeName"]?["name"].Matches(parameterType) ?? false) && functionParameter["name"].Matches(parameterName))
                             {
                                 isMatch = true;
                             }
@@ -332,17 +330,15 @@ public class FunctionFiltering : IFunctionFiltering
 
                         if (isMatch)
                         {
-                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                            filteringResult.AddFunction(contractName, currentFunctionName);
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -352,16 +348,17 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="parameters"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByParameters(JToken jToken, List<(string Type, string Value)> parameters)
+    public FilteringResult FilterFunctionsByParameters(JToken jToken, List<(string Type, string Value)> parameters)
     {
-        if (parameters == null || parameters.Count == 0)
-            throw new ArgumentNullException(nameof(parameters));
+        if (parameters == null || parameters.Count == 0) throw new ArgumentNullException(nameof(parameters));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -370,15 +367,16 @@ public class FunctionFiltering : IFunctionFiltering
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionParameters = subNode["parameters"]["parameters"].ToSafeList();
+                        var functionParameters = subNode["parameters"]?["parameters"].ToSafeList() ?? new List<JToken>();
 
-                        bool isMatch = functionParameters.Count > 0;
+                        var isMatch = functionParameters.Count > 0;
                         foreach (var functionParameter in functionParameters)
                         {
                             if (functionParameter["nodeType"].Matches(VariableDeclaration))
                             {
                                 isMatch = parameters.Exists(parameter =>
-                                    functionParameter["typeName"]["name"].Matches(parameter.Type) && functionParameter["name"].Matches(parameter.Value));
+                                    (functionParameter["typeName"]?["name"].Matches(parameter.Type) ?? false) &&
+                                    functionParameter["name"].Matches(parameter.Value));
 
                                 if (!isMatch)
                                 {
@@ -389,17 +387,15 @@ public class FunctionFiltering : IFunctionFiltering
 
                         if (isMatch)
                         {
-                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                            filteringResult.AddFunction(contractName, currentFunctionName);
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -409,16 +405,17 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="returnParameter"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByReturnParameters(JToken jToken, string returnParameter)
+    public FilteringResult FilterFunctionsByReturnParameters(JToken jToken, string returnParameter)
     {
-        if (string.IsNullOrWhiteSpace(returnParameter))
-            throw new ArgumentNullException(nameof(returnParameter));
+        if (string.IsNullOrWhiteSpace(returnParameter)) throw new ArgumentNullException(nameof(returnParameter));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -427,12 +424,13 @@ public class FunctionFiltering : IFunctionFiltering
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionReturnParameters = subNode["returnParameters"]["parameters"].ToSafeList();
+                        var functionReturnParameters = subNode["returnParameters"]?["parameters"].ToSafeList() ?? new List<JToken>();
 
-                        bool isMatch = false;
+                        var isMatch = false;
                         foreach (var functionReturnParameter in functionReturnParameters)
                         {
-                            if (functionReturnParameter["nodeType"].Matches(VariableDeclaration) && functionReturnParameter["typeName"]["name"].Matches(returnParameter))
+                            if (functionReturnParameter["nodeType"].Matches(VariableDeclaration) &&
+                                (functionReturnParameter["typeName"]?["name"].Matches(returnParameter) ?? false))
                             {
                                 isMatch = true;
                             }
@@ -440,17 +438,15 @@ public class FunctionFiltering : IFunctionFiltering
 
                         if (isMatch)
                         {
-                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                            filteringResult.AddFunction(contractName, currentFunctionName);
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -460,16 +456,17 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="returnParameters"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsByReturnParameters(JToken jToken, List<string> returnParameters)
+    public FilteringResult FilterFunctionsByReturnParameters(JToken jToken, List<string> returnParameters)
     {
-        if (returnParameters == null || returnParameters.Count == 0)
-            throw new ArgumentNullException(nameof(returnParameters));
+        if (returnParameters == null || returnParameters.Count == 0) throw new ArgumentNullException(nameof(returnParameters));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -478,30 +475,28 @@ public class FunctionFiltering : IFunctionFiltering
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var functionReturnParameters = subNode["returnParameters"]["parameters"].ToSafeList();
+                        var functionReturnParameters = subNode["returnParameters"]?["parameters"].ToSafeList() ?? new List<JToken>();
 
                         var functionReturnParametersList = new List<string>();
                         foreach (var functionReturnParameter in functionReturnParameters)
                         {
                             if (functionReturnParameter["nodeType"].Matches(VariableDeclaration))
                             {
-                                functionReturnParametersList.Add(functionReturnParameter["typeName"]["name"].Value<string>());
+                                functionReturnParametersList.Add(functionReturnParameter["typeName"]?["name"]?.Value<string>());
                             }
                         }
 
                         if (returnParameters.SequenceEqual(functionReturnParametersList))
                         {
-                            interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                            var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                            filteringResult.AddFunction(contractName, currentFunctionName);
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedFunctions = interestedFunctions
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -512,56 +507,49 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="functionName"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionCallsByInstanceName(JToken jToken, string instanceName, string functionName)
+    public FilteringResult FilterFunctionCallsByInstanceName(JToken jToken, string instanceName, string functionName)
     {
-        if (string.IsNullOrWhiteSpace(instanceName))
-            throw new ArgumentNullException(nameof(instanceName));
-        if (string.IsNullOrWhiteSpace(functionName))
-            throw new ArgumentNullException(nameof(functionName));
+        if (string.IsNullOrWhiteSpace(instanceName)) throw new ArgumentNullException(nameof(instanceName));
+        if (string.IsNullOrWhiteSpace(functionName)) throw new ArgumentNullException(nameof(functionName));
 
-        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
 
-        var childPosition = 0;
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
 
-                var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
+                    var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+
                     if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        var statements = subNode["body"]["statements"].ToSafeList();
+                        var statements = subNode["body"]?["statements"].ToSafeList() ?? new List<JToken>();
 
                         var statementPosition = 0;
                         foreach (var statement in statements)
                         {
-                            if (statement["nodeType"].Matches(ExpressionStatement) && statement["expression"]["nodeType"].Matches(FunctionCall)
-                                                                               && statement["expression"]["expression"]["expression"]["name"].Matches(instanceName)
-                                                                               && statement["expression"]["expression"]["memberName"].Matches(functionName))
+                            if (statement["nodeType"].Matches(ExpressionStatement) && (statement["expression"]?["nodeType"].Matches(FunctionCall) ?? false) &&
+                                (statement["expression"]?["expression"]?["expression"]?["name"].Matches(instanceName) ?? false) &&
+                                statement["expression"]["expression"]["memberName"].Matches(functionName))
                             {
-                                interestedStatements.Add((childPosition, subNodePosition, statementPosition, null, null), subNode["name"].Value<string>());
+                                filteringResult.AddStatement(contractName, currentFunctionName, statementPosition);
                             }
 
                             statementPosition++;
                         }
                     }
-
-                    subNodePosition++;
                 }
             }
-
-            childPosition++;
         }
 
-        return new SelectionResult
-        {
-            InterestedStatements = interestedStatements
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -572,14 +560,13 @@ public class FunctionFiltering : IFunctionFiltering
     /// <param name="invert"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterFunctionsImplementedFromInterface(JToken jToken, string interfaceName, bool invert)
+    public FilteringResult FilterFunctionsImplementedFromInterface(JToken jToken, string interfaceName, bool invert)
     {
-        if (string.IsNullOrWhiteSpace(interfaceName))
-            throw new ArgumentNullException(nameof(interfaceName));
+        if (string.IsNullOrWhiteSpace(interfaceName)) throw new ArgumentNullException(nameof(interfaceName));
 
-        var interestedFunctions = new Dictionary<string, string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children = jToken["nodes"] as JArray ?? new JArray();
 
         var interfaceFunctions = new List<string>();
         foreach (var child in children.Children())
@@ -592,7 +579,8 @@ public class FunctionFiltering : IFunctionFiltering
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
                     {
-                        interfaceFunctions.Add(subNode["name"].ToString());
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        interfaceFunctions.Add(currentFunctionName);
                     }
                 }
             }
@@ -600,6 +588,8 @@ public class FunctionFiltering : IFunctionFiltering
 
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
@@ -607,17 +597,65 @@ public class FunctionFiltering : IFunctionFiltering
                 foreach (var subNode in subNodes)
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
-                        invert ^ interfaceFunctions.Contains(subNode["name"].ToString()))
+                        invert ^ interfaceFunctions.Contains(subNode["name"]?.Value<string>()))
                     {
-                        interestedFunctions.Add(subNode["name"].Value<string>(), child["name"].Value<string>());
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        filteringResult.AddFunction(contractName, currentFunctionName);
                     }
                 }
             }
         }
 
-        return new SelectionResult
+        return filteringResult;
+    }
+
+    /// <summary>
+    /// Filter function statements that call a function found in an instanced contract
+    /// </summary>
+    /// <param name="jToken"></param>
+    /// <param name="functionName"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public FilteringResult FilterFunctionCalls(JToken jToken, string functionName)
+    {
+        if (string.IsNullOrWhiteSpace(functionName)) throw new ArgumentNullException(nameof(functionName));
+
+        var filteringResult = new FilteringResult();
+
+        var children = jToken["nodes"] as JArray ?? new JArray();
+
+        foreach (var child in children.Children())
         {
-            InterestedFunctions = interestedFunctions
-        };
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+
+            if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
+            {
+                var subNodes = child["nodes"].ToSafeList();
+
+                foreach (var subNode in subNodes)
+                {
+                    var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+
+                    if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function"))
+                    {
+                        var statements = subNode["body"]?["statements"].ToSafeList() ?? new List<JToken>();
+
+                        var statementPosition = 0;
+                        foreach (var statement in statements)
+                        {
+                            if (statement["nodeType"].Matches(ExpressionStatement) && (statement["expression"]?["nodeType"].Matches(FunctionCall) ?? false) &&
+                                (statement["expression"]?["expression"]?["memberName"].Matches(functionName) ?? false))
+                            {
+                                filteringResult.AddStatement(contractName, currentFunctionName, statementPosition);
+                            }
+
+                            statementPosition++;
+                        }
+                    }
+                }
+            }
+        }
+
+        return filteringResult;
     }
 }

@@ -1,5 +1,5 @@
-﻿using AspectSol.Lib.Infra.Extensions;
-using Newtonsoft.Json;
+﻿using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Extensions;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
@@ -23,15 +23,16 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void AddInterfaceToContract(ref JToken source, JToken contractInterface, SelectionResult selectionResult)
+    public void AddInterfaceToContract(ref JToken source, JToken contractInterface, FilteringResult filteringResult)
     {
-        foreach (var interestedContract in selectionResult.InterestedContracts)
+        foreach (var contract in filteringResult.ContractFilteringResults)
         {
             if (source["nodes"] is JArray nodes)
             {
                 foreach (var child in nodes.Children())
                 {
-                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") && child["name"].Matches(interestedContract))
+                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") && 
+                        child["name"].Matches(contract.ContractName))
                     {
                         var baseContracts = child["baseContracts"] as JArray;
                         baseContracts?.AddFirst(contractInterface);
@@ -41,15 +42,16 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void AddDefinitionToContract(ref JToken contract, JToken definition, SelectionResult selectionResult, bool addFirst = true)
+    public void AddDefinitionToContract(ref JToken source, JToken definition, FilteringResult filteringResult, bool addFirst = true)
     {
-        foreach (var interestedContract in selectionResult.InterestedContracts)
+        foreach (var contract in filteringResult.ContractFilteringResults)
         {
-            if (contract["nodes"] is JArray nodes)
+            if (source["nodes"] is JArray nodes)
             {
                 foreach (var child in nodes.Children())
                 {
-                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") && child["name"].Matches(interestedContract))
+                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") && 
+                        child["name"].Matches(contract.ContractName))
                     {
                         var baseContracts = child["nodes"] as JArray ?? new JArray();
 
@@ -86,61 +88,64 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void AddDefinitionsToContract(ref JToken contract, List<JToken> definitions, SelectionResult selectionResult, bool addFirst = true)
+    public void AddDefinitionsToContract(ref JToken source, List<JToken> definitions, FilteringResult filteringResult, bool addFirst = true)
     {
         foreach (var definition in definitions)
         {
-            AddDefinitionToContract(ref contract, definition, selectionResult, addFirst);
+            AddDefinitionToContract(ref source, definition, filteringResult, addFirst);
         }
     }
 
-    public void AddDefinitionToFunction(ref JToken contract, JToken definition, SelectionResult selectionResult, bool addFirst = true)
+    public void AddDefinitionToFunction(ref JToken source, JToken definition, FilteringResult filteringResult, bool addFirst = true)
     {
-        foreach (var interestedFunctions in selectionResult.InterestedFunctions)
+        foreach (var contract in filteringResult.ContractFilteringResults)
         {
-            if (contract["nodes"] is JArray nodes)
+            foreach (var function in contract.FunctionFilteringResults)
             {
-                foreach (var child in nodes.Children())
+                if (source["nodes"] is JArray nodes)
                 {
-                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
-                        child["name"].Matches(interestedFunctions.Value))
+                    foreach (var child in nodes.Children())
                     {
-                        var subNodes = child["nodes"].ToSafeList();
-
-                        foreach (var subNode in subNodes)
+                        if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
+                            child["name"].Matches(contract.ContractName))
                         {
-                            if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
-                                subNode["name"].Matches(interestedFunctions.Key))
-                            {
-                                var statements = subNode["body"]?["statements"] as JArray ?? new JArray();
-                                
-                                var newChildNodes = new JArray();
-                                if (addFirst)
-                                {
-                                    foreach (var newSubNode in GetFunctionSubNodes(definition))
-                                    {
-                                        newChildNodes.Add(newSubNode);
-                                    }
+                            var subNodes = child["nodes"].ToSafeList();
 
-                                    foreach (var statement in statements)
-                                    {
-                                        newChildNodes.Add(statement);
-                                    }
-                                }
-                                else
+                            foreach (var subNode in subNodes)
+                            {
+                                if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
+                                    subNode["name"].Matches(function.FunctionName))
                                 {
-                                    foreach (var statement in statements)
+                                    var statements = subNode["body"]?["statements"] as JArray ?? new JArray();
+                                
+                                    var newChildNodes = new JArray();
+                                    if (addFirst)
                                     {
-                                        newChildNodes.Add(statement);
+                                        foreach (var newSubNode in GetFunctionSubNodes(definition))
+                                        {
+                                            newChildNodes.Add(newSubNode);
+                                        }
+
+                                        foreach (var statement in statements)
+                                        {
+                                            newChildNodes.Add(statement);
+                                        }
                                     }
+                                    else
+                                    {
+                                        foreach (var statement in statements)
+                                        {
+                                            newChildNodes.Add(statement);
+                                        }
                             
-                                    foreach (var newSubNode in GetFunctionSubNodes(definition))
-                                    {
-                                        newChildNodes.Add(newSubNode);
+                                        foreach (var newSubNode in GetFunctionSubNodes(definition))
+                                        {
+                                            newChildNodes.Add(newSubNode);
+                                        }
                                     }
-                                }
                         
-                                subNode["body"]?["statements"]?.Replace(newChildNodes);
+                                    subNode["body"]?["statements"]?.Replace(newChildNodes);
+                                }
                             }
                         }
                     }
@@ -149,23 +154,24 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void AddDefinitionsToFunction(ref JToken source, List<JToken> definitions, SelectionResult selectionResult, bool addFirst = true)
+    public void AddDefinitionsToFunction(ref JToken source, List<JToken> definitions, FilteringResult filteringResult, bool addFirst = true)
     {
         foreach (var definition in definitions)
         {
-            AddDefinitionToFunction(ref source, definition, selectionResult, addFirst);
+            AddDefinitionToFunction(ref source, definition, filteringResult, addFirst);
         }
     }
 
-    public void UpdateContractName(ref JToken source, SelectionResult selectionResult, string name)
+    public void UpdateContractName(ref JToken source, FilteringResult filteringResult, string name)
     {
-        foreach (var interestedContract in selectionResult.InterestedContracts)
+        foreach (var contract in filteringResult.ContractFilteringResults)
         {
             if (source["nodes"] is JArray nodes)
             {
                 foreach (var child in nodes.Children())
                 {
-                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") && child["name"].Matches(interestedContract))
+                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") && 
+                        child["name"].Matches(contract.ContractName))
                     {
                         child["name"] = name;
                     }
@@ -174,25 +180,28 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void UpdateFunctionName(ref JToken source, SelectionResult selectionResult, string name)
+    public void UpdateFunctionName(ref JToken source, FilteringResult filteringResult, string name)
     {
-        foreach (var interestedFunctions in selectionResult.InterestedFunctions)
+        foreach (var contract in filteringResult.ContractFilteringResults)
         {
-            if (source["nodes"] is JArray nodes)
+            foreach (var function in contract.FunctionFilteringResults)
             {
-                foreach (var child in nodes.Children())
+                if (source["nodes"] is JArray nodes)
                 {
-                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
-                        child["name"].Matches(interestedFunctions.Value))
+                    foreach (var child in nodes.Children())
                     {
-                        var subNodes = child["nodes"].ToSafeList();
-
-                        foreach (var subNode in subNodes)
+                        if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
+                            child["name"].Matches(contract.ContractName))
                         {
-                            if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
-                                subNode["name"].Matches(interestedFunctions.Key))
+                            var subNodes = child["nodes"].ToSafeList();
+
+                            foreach (var subNode in subNodes)
                             {
-                                subNode["name"] = name;
+                                if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
+                                    subNode["name"].Matches(function.FunctionName))
+                                {
+                                    subNode["name"] = name;
+                                }
                             }
                         }
                     }
@@ -201,25 +210,28 @@ public class SourceManipulation : ISourceManipulation
         }
     }
 
-    public void UpdateFunctionVisibility(ref JToken source, SelectionResult selectionResult, string name)
+    public void UpdateFunctionVisibility(ref JToken source, FilteringResult filteringResult, string name)
     {
-        foreach (var interestedFunctions in selectionResult.InterestedFunctions)
+        foreach (var contract in filteringResult.ContractFilteringResults)
         {
-            if (source["nodes"] is JArray nodes)
+            foreach (var function in contract.FunctionFilteringResults)
             {
-                foreach (var child in nodes.Children())
+                if (source["nodes"] is JArray nodes)
                 {
-                    if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
-                        child["name"].Matches(interestedFunctions.Value))
+                    foreach (var child in nodes.Children())
                     {
-                        var subNodes = child["nodes"].ToSafeList();
-
-                        foreach (var subNode in subNodes)
+                        if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
+                            child["name"].Matches(contract.ContractName))
                         {
-                            if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
-                                subNode["name"].Matches(interestedFunctions.Key))
+                            var subNodes = child["nodes"].ToSafeList();
+
+                            foreach (var subNode in subNodes)
                             {
-                                subNode["visibility"] = name;
+                                if (subNode["nodeType"].Matches(FunctionDefinition) && subNode["kind"].Matches("function") &&
+                                    subNode["name"].Matches(function.FunctionName))
+                                {
+                                    subNode["visibility"] = name;
+                                }
                             }
                         }
                     }

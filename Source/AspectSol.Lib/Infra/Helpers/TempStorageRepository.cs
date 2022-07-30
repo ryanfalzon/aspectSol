@@ -1,7 +1,11 @@
 ﻿using System.Text;
 
-namespace AspectSol.Lib.Infra.TemporaryStorage;
+namespace AspectSol.Lib.Infra.Helpers;
 
+/// <summary>
+/// A service to store string content in a temp file and return the path to the file.
+/// Also facilitates removing created temp files when the process has been finished.
+/// </summary>
 public class TempStorageRepository
 {
     private const string Directory = "tmp/";

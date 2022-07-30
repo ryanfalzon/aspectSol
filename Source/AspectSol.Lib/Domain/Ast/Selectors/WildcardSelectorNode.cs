@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using AspectSol.Lib.Infra.Enums;
 using Newtonsoft.Json.Linq;
 
@@ -20,7 +21,7 @@ public class WildcardSelectorNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
     {
         var selectionResult = WildcardFor switch
         {
@@ -30,7 +31,8 @@ public class WildcardSelectorNode : SelectorNode
             WildcardFor.VariableTypeGetter => abstractFilteringService.VariableGettersFiltering.FilterVariableInteractionByVariableType(smartContract, Token),
             WildcardFor.VariableNameSetter => abstractFilteringService.VariableSettersFiltering.FilterVariableInteractionByVariableName(smartContract, Token),
             WildcardFor.VariableTypeSetter => abstractFilteringService.VariableSettersFiltering.FilterVariableInteractionByVariableType(smartContract, Token),
-            _                              => throw new ArgumentOutOfRangeException()
+            WildcardFor.DictionaryElement  => throw new NotSupportedException("Wildcard for dictionary element is not supported yet"),
+            _                              => throw new ArgumentOutOfRangeException($"Wildcard for [{WildcardFor}] out of supported range")
         };
 
         return selectionResult;

@@ -1,7 +1,10 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Extensions;
+using AspectSol.Lib.Infra.Helpers;
+using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast;
@@ -31,9 +34,9 @@ public class SyntaxModifierNode : SyntaxNode
         return stringBuilder.ToString();
     }
 
-    public override SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
     {
-        SelectionResult modifierSelectionResult;
+        FilteringResult modifierFilteringResult;
         
         if (Left.GetType() == typeof(ModifierNode))
         {
@@ -41,7 +44,7 @@ public class SyntaxModifierNode : SyntaxNode
 
             if (Right is null)
             {
-                modifierSelectionResult = Operator switch
+                modifierFilteringResult = Operator switch
                 {
                     ModifierOperator.Not  => abstractFilteringService.FunctionFiltering.FilterFunctionsByModifier(smartContract, leftModifierName, true),
                     ModifierOperator.None => abstractFilteringService.FunctionFiltering.FilterFunctionsByModifier(smartContract, leftModifierName, false),
@@ -56,7 +59,7 @@ public class SyntaxModifierNode : SyntaxNode
                     (Right as ModifierNode)?.ModifierName
                 };
 
-                modifierSelectionResult = Operator switch
+                modifierFilteringResult = Operator switch
                 {
                     ModifierOperator.Or  => abstractFilteringService.FunctionFiltering.FilterFunctionsByEitherModifiers(smartContract, modifiers),
                     ModifierOperator.And => abstractFilteringService.FunctionFiltering.FilterFunctionsByAllModifiers(smartContract, modifiers),
@@ -65,26 +68,14 @@ public class SyntaxModifierNode : SyntaxNode
             }
             else
             {
-                var leftSelectionResult = abstractFilteringService.FunctionFiltering.FilterFunctionsByModifier(smartContract, leftModifierName, false);
-                var rightSelectionResult = Right.Filter(smartContract, abstractFilteringService);
+                var leftFilteringResult = abstractFilteringService.FunctionFiltering.FilterFunctionsByModifier(smartContract, leftModifierName, false);
+                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService);
 
-                modifierSelectionResult = Operator switch
+                modifierFilteringResult = Operator switch
                 {
-                    ModifierOperator.Or => new SelectionResult
-                    {
-                        InterestedContracts   = leftSelectionResult.InterestedContracts.SafeUnion(rightSelectionResult.InterestedContracts),
-                        InterestedFunctions   = leftSelectionResult.InterestedFunctions.SafeUnion(rightSelectionResult.InterestedFunctions),
-                        InterestedDefinitions = leftSelectionResult.InterestedDefinitions.SafeUnion(rightSelectionResult.InterestedDefinitions),
-                        InterestedStatements  = leftSelectionResult.InterestedStatements.SafeUnion(rightSelectionResult.InterestedStatements)
-                    },
-                    ModifierOperator.And => new SelectionResult
-                    {
-                        InterestedContracts   = leftSelectionResult.InterestedContracts.SafetIntersect(rightSelectionResult.InterestedContracts),
-                        InterestedFunctions   = leftSelectionResult.InterestedFunctions.SafetIntersect(rightSelectionResult.InterestedFunctions),
-                        InterestedDefinitions = leftSelectionResult.InterestedDefinitions.SafetIntersect(rightSelectionResult.InterestedDefinitions),
-                        InterestedStatements  = leftSelectionResult.InterestedStatements.SafetIntersect(rightSelectionResult.InterestedStatements)
-                    },
-                    _ => throw new ArgumentOutOfRangeException($"Operator [{Operator}] cannot be applied on less than 2 modifier")
+                    ModifierOperator.Or  => FilteringResultHelpers.Union(leftFilteringResult, rightFilteringResult),
+                    ModifierOperator.And => FilteringResultHelpers.Intersect(leftFilteringResult, rightFilteringResult),
+                    _                    => throw new ArgumentOutOfRangeException($"Operator [{Operator}] cannot be applied on less than 2 modifier")
                 };
             }
         }
@@ -92,58 +83,34 @@ public class SyntaxModifierNode : SyntaxNode
         {
             if (Right is null)
             {
-                modifierSelectionResult = Left.Filter(smartContract, abstractFilteringService);
+                modifierFilteringResult = Left.Filter(smartContract, abstractFilteringService);
             }
             else if (Right.GetType() == typeof(ModifierNode))
             {
-                var leftSelectionResult = Left.Filter(smartContract, abstractFilteringService);
-                var rightSelectionResult = Right.Filter(smartContract, abstractFilteringService);
+                var leftFilteringResult = Left.Filter(smartContract, abstractFilteringService);
+                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService);
 
-                modifierSelectionResult = Operator switch
+                modifierFilteringResult = Operator switch
                 {
-                    ModifierOperator.Or => new SelectionResult
-                    {
-                        InterestedContracts   = leftSelectionResult.InterestedContracts.SafeUnion(rightSelectionResult.InterestedContracts),
-                        InterestedFunctions   = leftSelectionResult.InterestedFunctions.SafeUnion(rightSelectionResult.InterestedFunctions),
-                        InterestedDefinitions = leftSelectionResult.InterestedDefinitions.SafeUnion(rightSelectionResult.InterestedDefinitions),
-                        InterestedStatements  = leftSelectionResult.InterestedStatements.SafeUnion(rightSelectionResult.InterestedStatements)
-                    },
-                    ModifierOperator.And => new SelectionResult
-                    {
-                        InterestedContracts   = leftSelectionResult.InterestedContracts.SafetIntersect(rightSelectionResult.InterestedContracts),
-                        InterestedFunctions   = leftSelectionResult.InterestedFunctions.SafetIntersect(rightSelectionResult.InterestedFunctions),
-                        InterestedDefinitions = leftSelectionResult.InterestedDefinitions.SafetIntersect(rightSelectionResult.InterestedDefinitions),
-                        InterestedStatements  = leftSelectionResult.InterestedStatements.SafetIntersect(rightSelectionResult.InterestedStatements)
-                    },
-                    _ => throw new ArgumentOutOfRangeException($"Operator [{Operator}] cannot be applied on less than 2 modifier")
+                    ModifierOperator.Or  => FilteringResultHelpers.Union(leftFilteringResult, rightFilteringResult),
+                    ModifierOperator.And => FilteringResultHelpers.Intersect(leftFilteringResult, rightFilteringResult),
+                    _                    => throw new ArgumentOutOfRangeException($"Operator [{Operator}] cannot be applied on less than 2 modifier")
                 };
             }
             else
             {
-                var leftSelectionResult = Left.Filter(smartContract, abstractFilteringService);
-                var rightSelectionResult = Right.Filter(smartContract, abstractFilteringService);
+                var leftFilteringResult = Left.Filter(smartContract, abstractFilteringService);
+                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService);
 
-                modifierSelectionResult = Operator switch
+                modifierFilteringResult = Operator switch
                 {
-                    ModifierOperator.Or => new SelectionResult
-                    {
-                        InterestedContracts   = leftSelectionResult.InterestedContracts.SafeUnion(rightSelectionResult.InterestedContracts),
-                        InterestedFunctions   = leftSelectionResult.InterestedFunctions.SafeUnion(rightSelectionResult.InterestedFunctions),
-                        InterestedDefinitions = leftSelectionResult.InterestedDefinitions.SafeUnion(rightSelectionResult.InterestedDefinitions),
-                        InterestedStatements  = leftSelectionResult.InterestedStatements.SafeUnion(rightSelectionResult.InterestedStatements)
-                    },
-                    ModifierOperator.And => new SelectionResult
-                    {
-                        InterestedContracts   = leftSelectionResult.InterestedContracts.SafetIntersect(rightSelectionResult.InterestedContracts),
-                        InterestedFunctions   = leftSelectionResult.InterestedFunctions.SafetIntersect(rightSelectionResult.InterestedFunctions),
-                        InterestedDefinitions = leftSelectionResult.InterestedDefinitions.SafetIntersect(rightSelectionResult.InterestedDefinitions),
-                        InterestedStatements  = leftSelectionResult.InterestedStatements.SafetIntersect(rightSelectionResult.InterestedStatements)
-                    },
-                    _ => throw new ArgumentOutOfRangeException($"Operator [{Operator}] cannot be applied on less than 2 modifier")
+                    ModifierOperator.Or  => FilteringResultHelpers.Union(leftFilteringResult, rightFilteringResult),
+                    ModifierOperator.And => FilteringResultHelpers.Intersect(leftFilteringResult, rightFilteringResult),
+                    _                    => throw new ArgumentOutOfRangeException($"Operator [{Operator}] cannot be applied on less than 2 modifier")
                 };
             }
         }
 
-        return modifierSelectionResult;
+        return modifierFilteringResult;
     }
 }

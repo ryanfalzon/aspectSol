@@ -17,7 +17,7 @@ public class ContractFilteringTests : SolidityFilteringTests
         var transformer = new ContractFiltering();
         var result = transformer.FilterContractsByContractName(ContractAst, contractName);
 
-        Assert.AreEqual(1, result.InterestedContracts.Count);
+        Assert.AreEqual(1, result.ContractFilteringResults.Count);
     }
 
     [TestMethod]
@@ -26,7 +26,7 @@ public class ContractFilteringTests : SolidityFilteringTests
         var transformer = new ContractFiltering();
         var result = transformer.FilterContractsByContractName(ContractAst, WildcardToken);
 
-        Assert.AreEqual(TotalContracts, result.InterestedContracts.Count);
+        Assert.AreEqual(TotalContracts, result.ContractFilteringResults.Count);
     }
 
     [TestMethod]
@@ -43,7 +43,7 @@ public class ContractFilteringTests : SolidityFilteringTests
         var transformer = new ContractFiltering();
         var result = transformer.FilterContractsByInterfaceName(ContractAst, interfaceName);
 
-        Assert.AreEqual(1, result.InterestedContracts.Count);
+        Assert.AreEqual(1, result.ContractFilteringResults.Count);
     }
 
     [TestMethod]
@@ -52,7 +52,7 @@ public class ContractFilteringTests : SolidityFilteringTests
         var transformer = new ContractFiltering();
         var result = transformer.FilterContractsByInterfaceName(ContractAst, WildcardToken);
 
-        Assert.AreEqual(TotalContractsImplementingInterfaces, result.InterestedContracts.Count);
+        Assert.AreEqual(TotalContractsImplementingInterfaces, result.ContractFilteringResults.Count);
     }
 
     [TestMethod]

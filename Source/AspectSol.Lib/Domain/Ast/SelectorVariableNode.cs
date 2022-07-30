@@ -1,6 +1,9 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Helpers;
+using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast;
@@ -36,27 +39,15 @@ public class SelectorVariableNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
     {
-        var variableTypeSelectionResult = VariableType.Filter(smartContract, abstractFilteringService);
-        var variableLocationSelectionResult = VariableLocation.Filter(smartContract, abstractFilteringService);
-        var variableNameSelectorSelectionResult = VariableNameSelector.Filter(smartContract, abstractFilteringService);
-        var variableDecoratorSelectionResult = DecoratorVariable.Filter(smartContract, abstractFilteringService);
+        var variableTypeFilteringResult = VariableType.Filter(smartContract, abstractFilteringService);
+        var variableLocationFilteringResult = VariableLocation.Filter(smartContract, abstractFilteringService);
+        var variableNameSelectorFilteringResult = VariableNameSelector.Filter(smartContract, abstractFilteringService);
+        var variableDecoratorFilteringResult = DecoratorVariable.Filter(smartContract, abstractFilteringService);
 
-        var selectionResult = new SelectionResult
-        {
-            InterestedContracts = variableTypeSelectionResult.InterestedContracts.Intersect(variableLocationSelectionResult.InterestedContracts).Intersect
-                (variableNameSelectorSelectionResult.InterestedContracts).Intersect(variableDecoratorSelectionResult.InterestedContracts).ToList(),
-            InterestedFunctions = variableTypeSelectionResult.InterestedFunctions.Intersect(variableLocationSelectionResult.InterestedFunctions).Intersect
-                (variableNameSelectorSelectionResult.InterestedFunctions).Intersect(variableDecoratorSelectionResult.InterestedFunctions).ToDictionary(item
-                => item.Key, item => item.Value),
-            InterestedDefinitions = variableTypeSelectionResult.InterestedDefinitions.Intersect(variableLocationSelectionResult.InterestedDefinitions).Intersect
-                (variableNameSelectorSelectionResult.InterestedDefinitions).Intersect(variableDecoratorSelectionResult.InterestedDefinitions).ToDictionary(item
-                => item.Key, item => item.Value),
-            InterestedStatements = variableTypeSelectionResult.InterestedStatements.Intersect(variableLocationSelectionResult.InterestedStatements).Intersect
-                (variableNameSelectorSelectionResult.InterestedStatements).Intersect(variableDecoratorSelectionResult.InterestedStatements).ToDictionary(item
-                => item.Key, item => item.Value),
-        };
-        return selectionResult;
+        var intersectionResult = FilteringResultHelpers.Intersect(variableTypeFilteringResult, variableLocationFilteringResult,
+            variableNameSelectorFilteringResult, variableDecoratorFilteringResult);
+        return intersectionResult;
     }
 }

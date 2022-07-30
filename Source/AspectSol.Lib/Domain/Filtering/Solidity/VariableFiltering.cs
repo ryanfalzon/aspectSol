@@ -1,4 +1,5 @@
-﻿using AspectSol.Lib.Infra.Extensions;
+﻿using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Extensions;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
@@ -24,44 +25,65 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
     
     private const string StateVariableDeclaration = "StateVariableDeclaration";
 
-    private readonly Dictionary<(string ContractName, string VariableName), (string VariableType, string VariableVisibility)> Locals;
+    private readonly Dictionary<(string ContractName, string VariableName), (string VariableType, string VariableVisibility)> _locals;
 
     protected VariableFiltering()
     {
-        Locals = new Dictionary<(string, string), (string, string)>();
+        _locals = new Dictionary<(string, string), (string, string)>();
+    }
+    
+    protected List<StatementFilteringResult> CheckStatementsForVariableName(List<JToken> statements, string variableName)
+    {
+        var statementFilteringResults = new List<StatementFilteringResult>();
+
+        var statementIndex = 0;
+        foreach (var statement in statements)
+        {
+            var statementFilteringResult = CheckStatementForVariableName(statement, variableName, statementIndex);
+            if (statementFilteringResult != null) statementFilteringResults.Add(statementFilteringResult);
+
+            statementIndex++;
+        }
+
+        return statementFilteringResults;
     }
 
-    protected abstract IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex,
-        int? ArgumentIndex), string>> CheckStatementsForVariableName(
-        List<JToken> statements, string variableName, int contractPosition, string functionName, int functionPosition);
-    
-    protected abstract IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex,
-        int? ArgumentIndex), string>> CheckStatementForVariableName(
-        JToken statement, string variableName, int contractPosition, string functionName, int functionPosition,
-        int statementPosition);
+    protected List<StatementFilteringResult> CheckStatementsForVariableType(List<JToken> statements, string contractName, string variableType)
+    {
+        var statementFilteringResults = new List<StatementFilteringResult>();
 
-    protected abstract IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int?
-        SubStatementIndex,
-        int? ArgumentIndex), string>> CheckStatementsForVariableType(
-        List<JToken> statements, string variableType, string contractName, int contractPosition, string functionName,
-        int functionPosition);
+        var statementIndex = 0;
+        foreach (var statement in statements)
+        {
+            var statementFilteringResult = CheckStatementForVariableType(statement, contractName, variableType, statementIndex);
+            if (statementFilteringResult != null) statementFilteringResults.Add(statementFilteringResult);
 
-    protected abstract IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex,
-        int? ArgumentIndex), string>> CheckStatementForVariableType(
-        JToken statement, string variableType, string contractName, int contractPosition, string functionName,
-        int functionPosition, int statementPosition);
+            statementIndex++;
+        }
 
-    protected abstract
-        IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int?
-            ArgumentIndex), string>> CheckStatementsForVariableVisibility(
-            List<JToken> statements, string variableVisibility, string contractName, int contractPosition,
-            string functionName, int functionPosition);
+        return statementFilteringResults;
+    }
 
-    protected abstract
-        IEnumerable<KeyValuePair<(int ContractIndex, int FunctionIndex, int StatementIndex, int? SubStatementIndex, int?
-            ArgumentIndex), string>> CheckStatementForVariableVisibility(
-            JToken statement, string variableVisibility, string contractName, int contractPosition, string functionName,
-            int functionPosition, int statementPosition);
+    protected List<StatementFilteringResult> CheckStatementsForVariableVisibility(List<JToken> statements, string contractName,
+        string variableVisibility)
+    {
+        var statementFilteringResults = new List<StatementFilteringResult>();
+
+        var statementIndex = 0;
+        foreach (var statement in statements)
+        {
+            var statementFilteringResult = CheckStatementForVariableVisibility(statement, contractName, variableVisibility, statementIndex);
+            if (statementFilteringResult != null) statementFilteringResults.Add(statementFilteringResult);
+
+            statementIndex++;
+        }
+
+        return statementFilteringResults;
+    }
+
+    protected abstract StatementFilteringResult CheckStatementForVariableName(JToken statement, string variableName, int statementPosition);
+    protected abstract StatementFilteringResult CheckStatementForVariableType(JToken statement, string contractName, string variableType, int statementPosition);
+    protected abstract StatementFilteringResult CheckStatementForVariableVisibility(JToken statement, string contractName, string variableVisibility, int statementPosition);
      
     /// <summary>
     /// Filter any form of variable interaction based on the name of the variable
@@ -70,46 +92,40 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
     /// <param name="variableName"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterVariableInteractionByVariableName(JToken jToken, string variableName)
+    public FilteringResult FilterVariableInteractionByVariableName(JToken jToken, string variableName)
     {
         if (string.IsNullOrWhiteSpace(variableName))
             throw new ArgumentNullException(nameof(variableName));
 
-        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children =  jToken["nodes"] as JArray ?? new JArray();
 
-        var childPosition = 0;
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+            
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
 
-                var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && (subNode["kind"].Matches("function") || subNode["kind"].Matches("constructor")) ||
                         subNode["nodeType"].Matches(ModifierDefinition))
                     {
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        
                         var statements = subNode["body"]?["statements"].ToSafeList();
-                        foreach (var (key, value) in CheckStatementsForVariableName(statements, variableName, childPosition, subNode["name"].Value<string>(), subNodePosition))
-                        {
-                            interestedStatements.Add(key, value);
-                        }
+                        var statementFilteringResults = CheckStatementsForVariableName(statements, variableName);
+                        
+                        filteringResult.AddStatement(contractName, currentFunctionName, statementFilteringResults);
                     }
-
-                    subNodePosition++;
                 }
             }
-
-            childPosition++;
         }
 
-        return new SelectionResult
-        {
-            InterestedStatements = interestedStatements
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -119,46 +135,40 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
     /// <param name="variableType"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterVariableInteractionByVariableType(JToken jToken, string variableType)
+    public FilteringResult FilterVariableInteractionByVariableType(JToken jToken, string variableType)
     {
         if (string.IsNullOrWhiteSpace(variableType))
             throw new ArgumentNullException(nameof(variableType));
 
-        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children =  jToken["nodes"] as JArray ?? new JArray();
 
-        var childPosition = 0;
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+            
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
 
-                var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && (subNode["kind"].Matches("function") || subNode["kind"].Matches("constructor")) ||
                         subNode["nodeType"].Matches(ModifierDefinition))
                     {
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        
                         var statements = subNode["body"]?["statements"].ToSafeList();
-                        foreach (var (key, value) in CheckStatementsForVariableType(statements, variableType, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
-                        {
-                            interestedStatements.Add(key, value);
-                        }
+                        var statementFilteringResults = CheckStatementsForVariableType(statements, contractName, variableType);
+                        
+                        filteringResult.AddStatement(contractName, currentFunctionName, statementFilteringResults);
                     }
-
-                    subNodePosition++;
                 }
             }
-
-            childPosition++;
         }
 
-        return new SelectionResult
-        {
-            InterestedStatements = interestedStatements
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -168,46 +178,40 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
     /// <param name="variableVisibility"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public SelectionResult FilterVariableInteractionByVariableVisibility(JToken jToken, string variableVisibility)
+    public FilteringResult FilterVariableInteractionByVariableVisibility(JToken jToken, string variableVisibility)
     {
         if (string.IsNullOrWhiteSpace(variableVisibility))
             throw new ArgumentNullException(nameof(variableVisibility));
 
-        var interestedStatements = new Dictionary<(int, int, int, int?, int?), string>();
+        var filteringResult = new FilteringResult();
 
-        var children = jToken["nodes"] as JArray;
+        var children =  jToken["nodes"] as JArray ?? new JArray();
 
-        var childPosition = 0;
         foreach (var child in children.Children())
         {
+            var contractName = child["name"]?.Value<string>() ?? string.Empty;
+            
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
                 var subNodes = child["nodes"].ToSafeList();
 
-                var subNodePosition = 0;
                 foreach (var subNode in subNodes)
                 {
                     if (subNode["nodeType"].Matches(FunctionDefinition) && (subNode["kind"].Matches("function") || subNode["kind"].Matches("constructor")) ||
                         subNode["nodeType"].Matches(ModifierDefinition))
                     {
+                        var currentFunctionName = subNode["name"]?.Value<string>() ?? string.Empty;
+                        
                         var statements = subNode["body"]?["statements"].ToSafeList();
-                        foreach (var (key, value) in CheckStatementsForVariableVisibility(statements, variableVisibility, child["name"].ToString(), childPosition, subNode["name"].Value<string>(), subNodePosition))
-                        {
-                            interestedStatements.Add(key, value);
-                        }
+                        var statementFilteringResults = CheckStatementsForVariableVisibility(statements, contractName, variableVisibility);
+                        
+                        filteringResult.AddStatement(contractName, currentFunctionName, statementFilteringResults);
                     }
-
-                    subNodePosition++;
                 }
             }
-
-            childPosition++;
         }
 
-        return new SelectionResult
-        {
-            InterestedStatements = interestedStatements
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -216,7 +220,7 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
     /// <param name="jToken"></param>
     /// <param name="accessKey"></param>
     /// <returns></returns>
-    public SelectionResult FilterVariableInteractionByVariableAccessKey(JToken jToken, string accessKey)
+    public FilteringResult FilterVariableInteractionByVariableAccessKey(JToken jToken, string accessKey)
     {
         // TODO - FilterVariableGettersByAccessKey
         throw new NotImplementedException();
@@ -224,24 +228,24 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
 
     public void LoadLocals(JToken source)
     {
-        var children = source["nodes"] as JArray;
+        var children = source["nodes"] as JArray ?? new JArray();
 
         foreach (var child in children.Children())
         {
             if (child["nodeType"].Matches(ContractDefinition) && !child["contractKind"].Matches("interface"))
             {
-                var contractName = child["name"].ToString();
+                var contractName = child["name"]?.Value<string>() ?? string.Empty;
                 var subNodes = child["nodes"].ToSafeList();
 
                 foreach (var subNode in subNodes)
                 {
                     if (subNode["nodeType"].Matches(VariableDeclaration))
                     {
-                        var variableName = subNode["name"].Value<string>();
-                        var variableType = subNode["typeDescriptions"]["typeString"].Value<string>();
-                        var variableVisibility = subNode["visibility"].Value<string>();
+                        var variableName = subNode["name"]?.Value<string>();
+                        var variableType = subNode["typeDescriptions"]?["typeString"]?.Value<string>();
+                        var variableVisibility = subNode["visibility"]?.Value<string>();
 
-                        Locals.Add((contractName, variableName), (variableType, variableVisibility));
+                        _locals.Add((contractName, variableName), (variableType, variableVisibility));
                     }
                 }
             }
@@ -250,8 +254,8 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
 
     protected bool IsVariableTypeMatch(string contractName, string variableName, string variableType)
     {
-        return Locals.ContainsKey((contractName, variableName)) &&
-               Locals[(contractName, variableName)].VariableType == variableType;
+        return _locals.ContainsKey((contractName, variableName)) &&
+               _locals[(contractName, variableName)].VariableType == variableType;
     }
 
     protected bool IsVariableTypeMatch(string contractName, JToken variableName, string variableType)
@@ -262,9 +266,9 @@ public abstract class VariableFiltering : IVariableInteractionFiltering
 
     protected bool IsVariableVisibilityMatch(string contractName, string variableName, string variableVisibility)
     {
-        return Locals.ContainsKey((contractName, variableName)) && (
-               Locals[(contractName, variableName)].VariableVisibility == "default" && variableVisibility == "internal" ||
-               Locals[(contractName, variableName)].VariableVisibility == variableVisibility);
+        return _locals.ContainsKey((contractName, variableName)) && (
+               _locals[(contractName, variableName)].VariableVisibility == "default" && variableVisibility == "internal" ||
+               _locals[(contractName, variableName)].VariableVisibility == variableVisibility);
     }
 
     protected bool IsVariableVisibilityMatch(string contractName, JToken variableName, string variableVisibility)

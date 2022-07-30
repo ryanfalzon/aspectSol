@@ -3,7 +3,7 @@ using AspectSol.Lib.Domain.Interpreter;
 using AspectSol.Lib.Domain.JavascriptExecution;
 using AspectSol.Lib.Domain.Parser;
 using AspectSol.Lib.Domain.Tokenizer;
-using AspectSol.Lib.Infra.TemporaryStorage;
+using AspectSol.Lib.Infra.Helpers;
 using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
 

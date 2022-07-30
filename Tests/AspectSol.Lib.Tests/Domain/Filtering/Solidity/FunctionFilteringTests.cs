@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AspectSol.Lib.Domain.Filtering;
 
 namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity;
 
@@ -17,8 +18,9 @@ public class FunctionFilteringTests : SolidityFilteringTests
     {
         var transformer = new FunctionFiltering();
         var result = transformer.FilterFunctionsByFunctionName(ContractAst, functionName);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
 
-        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+        Assert.AreEqual(expectedCount, interestedFunctions);
     }
 
     [TestMethod]
@@ -26,8 +28,9 @@ public class FunctionFilteringTests : SolidityFilteringTests
     {
         var transformer = new FunctionFiltering();
         var result = transformer.FilterFunctionsByFunctionName(ContractAst, WildcardToken);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
 
-        Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
+        Assert.AreEqual(TotalFunctions, interestedFunctions);
     }
 
     [TestMethod]
@@ -43,9 +46,10 @@ public class FunctionFilteringTests : SolidityFilteringTests
     public void FilterFunctionsByVisibility(string visibility, int expectedCount)
     {
         var transformer = new FunctionFiltering();
-
         var result = transformer.FilterFunctionsByVisibility(ContractAst, visibility);
-        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        
+        Assert.AreEqual(expectedCount, interestedFunctions);
     }
 
     [TestMethod]
@@ -53,8 +57,9 @@ public class FunctionFilteringTests : SolidityFilteringTests
     {
         var transformer = new FunctionFiltering();
         var result = transformer.FilterFunctionsByVisibility(ContractAst, WildcardToken);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
 
-        Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
+        Assert.AreEqual(TotalFunctions, interestedFunctions);
     }
 
     [TestMethod]
@@ -70,8 +75,9 @@ public class FunctionFilteringTests : SolidityFilteringTests
     {
         var transformer = new FunctionFiltering();
         var result = transformer.FilterFunctionsByStateMutability(ContractAst, mutability);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
 
-        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+        Assert.AreEqual(expectedCount, interestedFunctions);
     }
 
     [TestMethod]
@@ -79,8 +85,9 @@ public class FunctionFilteringTests : SolidityFilteringTests
     {
         var transformer = new FunctionFiltering();
         var result = transformer.FilterFunctionsByStateMutability(ContractAst, WildcardToken);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
 
-        Assert.AreEqual(TotalFunctions, result.InterestedFunctions.Count);
+        Assert.AreEqual(TotalFunctions, interestedFunctions);
     }
 
     [TestMethod]
@@ -96,9 +103,10 @@ public class FunctionFilteringTests : SolidityFilteringTests
     public void FilterFunctionsByAllModifiers(int expectedCount, params string[] modifiers)
     {
         var transformer = new FunctionFiltering();
-
         var result = transformer.FilterFunctionsByAllModifiers(ContractAst, modifiers.ToList());
-        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        
+        Assert.AreEqual(expectedCount, interestedFunctions);
     }
 
     [TestMethod]
@@ -114,9 +122,10 @@ public class FunctionFilteringTests : SolidityFilteringTests
     public void FilterFunctionsByEitherModifiers(int expectedCount, params string[] modifiers)
     {
         var transformer = new FunctionFiltering();
-
         var result = transformer.FilterFunctionsByEitherModifiers(ContractAst, modifiers.ToList());
-        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        
+        Assert.AreEqual(expectedCount, interestedFunctions);
     }
 
     [TestMethod]
@@ -132,9 +141,10 @@ public class FunctionFilteringTests : SolidityFilteringTests
     public void FilterFunctionsByModifier(int expectedCount, string modifier, bool invert)
     {
         var transformer = new FunctionFiltering();
-
         var result = transformer.FilterFunctionsByModifier(ContractAst, modifier, invert);
-        Assert.AreEqual(expectedCount, result.InterestedFunctions.Count);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        
+        Assert.AreEqual(expectedCount, interestedFunctions);
     }
 
     [TestMethod]
@@ -150,13 +160,16 @@ public class FunctionFilteringTests : SolidityFilteringTests
         var transformer = new FunctionFiltering();
 
         var result1 = transformer.FilterFunctionsByParameters(ContractAst, "uint256", "num");
-        Assert.AreEqual(2, result1.InterestedFunctions.Count);
+        var interestedFunctions1 = result1.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(2, interestedFunctions1);
 
         var result2 = transformer.FilterFunctionsByParameters(ContractAst, new List<(string Type, string Value)> { ("uint256", "num") });
-        Assert.AreEqual(2, result2.InterestedFunctions.Count);
+        var interestedFunctions2 = result2.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(2, interestedFunctions2);
 
         var result3 = transformer.FilterFunctionsByParameters(ContractAst, new List<(string Type, string Value)> { ("uint128", "anotherNum") });
-        Assert.AreEqual(0, result3.InterestedFunctions.Count);
+        var interestedFunctions3 = result3.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(0, interestedFunctions3);
     }
 
     [TestMethod]
@@ -174,13 +187,16 @@ public class FunctionFilteringTests : SolidityFilteringTests
         var transformer = new FunctionFiltering();
 
         var result1 = transformer.FilterFunctionsByReturnParameters(ContractAst, "address");
-        Assert.AreEqual(0, result1.InterestedFunctions.Count);
+        var interestedFunctions1 = result1.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(0, interestedFunctions1);
 
         var result2 = transformer.FilterFunctionsByReturnParameters(ContractAst, "uint256");
-        Assert.AreEqual(4, result2.InterestedFunctions.Count);
+        var interestedFunctions2 = result2.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(4, interestedFunctions2);
 
         var result3 = transformer.FilterFunctionsByReturnParameters(ContractAst, new List<string> { "bool" });
-        Assert.AreEqual(1, result3.InterestedFunctions.Count);
+        var interestedFunctions3 = result3.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(1, interestedFunctions3);
     }
 
     [TestMethod]
@@ -199,7 +215,8 @@ public class FunctionFilteringTests : SolidityFilteringTests
         var transformer = new FunctionFiltering();
 
         var result = transformer.FilterFunctionCallsByInstanceName(ContractAst, instanceName, functionName);
-        Assert.AreEqual(expectedCount, result.InterestedStatements.Count);
+        var interestedFunctions = result.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(expectedCount, interestedFunctions);
     }
 
     [TestMethod]
@@ -218,10 +235,12 @@ public class FunctionFilteringTests : SolidityFilteringTests
         var transformer = new FunctionFiltering();
 
         var result1 = transformer.FilterFunctionsImplementedFromInterface(ContractAst, interfaceName, false);
-        Assert.AreEqual(2, result1.InterestedFunctions.Count);
+        var interestedFunctions1 = result1.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(2, interestedFunctions1);
 
         var result2 = transformer.FilterFunctionsImplementedFromInterface(ContractAst, interfaceName, true);
-        Assert.AreEqual(5, result2.InterestedFunctions.Count);
+        var interestedFunctions2 = result2.ContractFilteringResults.Sum(x => x.FunctionFilteringResults.Count);
+        Assert.AreEqual(5, interestedFunctions2);
     }
 
     [TestMethod]

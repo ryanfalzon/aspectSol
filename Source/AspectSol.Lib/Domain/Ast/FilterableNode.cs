@@ -1,4 +1,5 @@
 ﻿using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast;
@@ -11,5 +12,5 @@ public abstract class FilterableNode : Node
     /// <param name="smartContract"></param>
     /// <param name="abstractFilteringService"></param>
     /// <returns>Selection result which contains the updated JSON encoded smart contract</returns>
-    public abstract SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService);
+    public abstract FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService);
 }

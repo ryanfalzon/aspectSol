@@ -1,10 +1,11 @@
 ﻿using System.Text;
+using AspectSol.Lib.Domain.Ast.Locations;
 using AspectSol.Lib.Domain.Ast.Placements;
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.JavascriptExecution;
 using AspectSol.Lib.Infra.Helpers;
-using AspectSol.Lib.Infra.TemporaryStorage;
+using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast.Statements;
@@ -39,9 +40,9 @@ public class AppendStatementNode : StatementNode
     public override JToken Execute(JToken smartContract, AbstractFilteringService abstractFilteringService, IJavascriptExecutor javascriptExecutor,
         TempStorageRepository tempStorageRepository, SolidityAstNodeIdResolver solidityAstNodeIdResolver)
     {
-        var selectionResults = Selectors.Select(x => x.Filter(smartContract, abstractFilteringService)).ToArray();
-        var intersectionResult = SelectionResultHelpers.Intersect(selectionResults);
-        var encodedBody = EncodeBodyContent(intersectionResult, tempStorageRepository, javascriptExecutor, solidityAstNodeIdResolver);
+        var filteringResults = Selectors.Select(x => x.Filter(smartContract, abstractFilteringService)).ToArray();
+        var intersectionResult = FilteringResultHelpers.Intersect(filteringResults);
+        var encodedBody = EncodeBodyContent(intersectionResult, tempStorageRepository, javascriptExecutor);
         
         return Placement.Evaluate(smartContract, intersectionResult, encodedBody, abstractFilteringService);
     }

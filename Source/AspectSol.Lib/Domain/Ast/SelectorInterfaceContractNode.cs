@@ -1,7 +1,10 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using AspectSol.Lib.Infra.Extensions;
+using AspectSol.Lib.Infra.Helpers;
+using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast;
@@ -28,17 +31,12 @@ public class SelectorInterfaceContractNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
     {
-        var contractNameSelectionResult = abstractFilteringService.ContractFiltering.FilterContractsByContractName(smartContract, ContractName);
-        var interfaceNameSelectionResult = abstractFilteringService.ContractFiltering.FilterContractsByInterfaceName(smartContract, InterfaceName);
-        
-        return new SelectionResult
-        {
-            InterestedContracts   = contractNameSelectionResult.InterestedContracts.SafetIntersect(interfaceNameSelectionResult.InterestedContracts),
-            InterestedFunctions   = contractNameSelectionResult.InterestedFunctions.SafetIntersect(interfaceNameSelectionResult.InterestedFunctions),
-            InterestedDefinitions = contractNameSelectionResult.InterestedDefinitions.SafetIntersect(interfaceNameSelectionResult.InterestedDefinitions),
-            InterestedStatements  = contractNameSelectionResult.InterestedStatements.SafetIntersect(interfaceNameSelectionResult.InterestedStatements),
-        };
+        var contractNameFilteringResult = abstractFilteringService.ContractFiltering.FilterContractsByContractName(smartContract, ContractName);
+        var interfaceNameFilteringResult = abstractFilteringService.ContractFiltering.FilterContractsByInterfaceName(smartContract, InterfaceName);
+
+        var intersectionResult = FilteringResultHelpers.Intersect(contractNameFilteringResult, interfaceNameFilteringResult);
+        return intersectionResult;
     }
 }

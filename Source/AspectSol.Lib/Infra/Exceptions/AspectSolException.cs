@@ -2,7 +2,6 @@
 
 public abstract class AspectSolException : Exception
 {
-
     protected AspectSolException(string message) : base(message)
     {
     }

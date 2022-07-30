@@ -1,10 +1,8 @@
 ﻿using AspectSol.Lib.App;
-using AspectSol.Lib.Domain.JavascriptExecution;
 using AspectSol.Lib.Infra.ServiceCollectionExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace AspectSol.App;
 
@@ -12,13 +10,11 @@ public class Program
 {
     private readonly ILogger<Program> _logger;
     private readonly AppService _appService;
-    private readonly IJavascriptExecutor _javascriptExecutor;
 
-    public Program(ILogger<Program> logger, AppService appService, IJavascriptExecutor javascriptExecutor)
+    public Program(ILogger<Program> logger, AppService appService)
     {
-        _logger = logger;
+        _logger     = logger;
         _appService = appService;
-        _javascriptExecutor = javascriptExecutor;
     }
 
     public static void Main(string[] args)
@@ -27,34 +23,29 @@ public class Program
         host.Services.GetRequiredService<Program>().Run(args);
     }
 
-    public void Run(string[] args)
+    private void Run(IReadOnlyList<string> args)
     {
-        if (args.Length == 0)
+        if (args.Count != 3)
         {
             _logger.LogError("Invalid arguments");
         }
 
-        var ast = _javascriptExecutor.Execute("generateAst", new object[] { "Resources/SampleSmartContract.sol" }).Result;
-        var code = _javascriptExecutor.Execute("generateCode", new object[] { JsonConvert.DeserializeObject<JavascriptResponse>(ast)?.Data }).Result;
-
-        //var command = args[0];
-
-        //switch (command)
-        //{
-        //    case "execute" when args.Length == 4:
-        //        {
-        //            //var aspectSolFilePath = args[1];
-        //            //var smartContractFilePath = args[2];
-        //            //var outputFilePath = args[3];
-
-        //            //await _appService.Execute(aspectSolFilePath, smartContractFilePath, outputFilePath);
-
-        //            var ast = _javascriptExecutor.Execute("generateAst", new object[] { "Resources/SampleSmartContract.sol" }).Result;
-        //            var code = _javascriptExecutor.Execute("generateCode", new object[] { JsonConvert.DeserializeObject<JavascriptResponse>(ast)?.Data }).Result;
-        //        }
-        //        break;
-
-        //}
+        var scriptPath = args[0];
+        var smartContractPath = args[1];
+        var newSmartContractPath = args[2];
+        
+        if(!File.Exists(scriptPath)) _logger.LogError("Script file does not exist");
+        else if(!File.Exists(smartContractPath)) _logger.LogError("Smart contract file does not exist");
+        else
+        {
+            var script = File.ReadAllText(scriptPath);
+            var smartContract = File.ReadAllText(smartContractPath);
+            
+            var result = _appService.Execute(script, smartContract);
+            File.WriteAllText(newSmartContractPath, result);
+            
+            _logger.LogInformation("Process completed successfully");
+        }
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args)
@@ -63,7 +54,8 @@ public class Program
             .ConfigureServices(services =>
             {
                 services.AddTransient<Program>();
-                AspectSolCollectionExtensions.AddAspectSolServiceConfig(services);
+                services.AddAspectSolServiceConfig();
+                services.AddSolidityFilteringConfig();
             });
     }
 }

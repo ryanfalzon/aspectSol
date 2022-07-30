@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast.Modifications;
@@ -16,7 +17,7 @@ public class UpdateModificationNode : ModificationNode
         return stringBuilder.ToString();
     }
 
-    public override JToken Evaluate(JToken contract, SelectionResult selectionResult, JToken content, AbstractFilteringService abstractFilteringService)
+    public override JToken Evaluate(JToken contract, FilteringResult filteringResult, JToken content, AbstractFilteringService abstractFilteringService)
     {
         throw new NotImplementedException();
     }

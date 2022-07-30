@@ -1,9 +1,8 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using AspectSol.Lib.Domain.JavascriptExecution;
-using AspectSol.Lib.Infra;
 using AspectSol.Lib.Infra.Helpers;
-using AspectSol.Lib.Infra.TemporaryStorage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -28,15 +27,14 @@ public abstract class StatementNode : ExecutableNode
         return stringBuilder.ToString();
     }
 
-    protected JToken EncodeBodyContent(SelectionResult selectionResult, TempStorageRepository tempStorageRepository, IJavascriptExecutor javascriptExecutor,
-        SolidityAstNodeIdResolver solidityAstNodeIdResolver)
+    protected JToken EncodeBodyContent(FilteringResult filteringResult, TempStorageRepository tempStorageRepository, IJavascriptExecutor javascriptExecutor)
     {
         var bodyText = string.Join('\n', Body.Select(x => x.GetValue()));
-        if (selectionResult.InterestedFunctions is {Count: > 0})
+        if (filteringResult.ContractFilteringResults.Any(x => x.FunctionFilteringResults.Count > 0))
         {
             bodyText = SolidityPlaceholderFactory.GetFunctionStatementPlaceholder(bodyText);
         }
-        else if (selectionResult.InterestedContracts is {Count: > 0})
+        else if (filteringResult.ContractFilteringResults.Any())
         {
             bodyText = SolidityPlaceholderFactory.GetContractStatementPlaceholder(bodyText);
         }

@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast.Placements;
@@ -16,14 +17,9 @@ public class BeforePlacementNode : PlacementNode
         return stringBuilder.ToString();
     }
 
-    public override JToken Evaluate(JToken contract, SelectionResult selectionResult, JToken content, AbstractFilteringService abstractFilteringService)
+    public override JToken Evaluate(JToken contract, FilteringResult filteringResult, JToken content, AbstractFilteringService abstractFilteringService)
     {
-        if (selectionResult.InterestedFunctions != null && selectionResult.InterestedFunctions.Count != 0)
-        {
-            abstractFilteringService.SourceManipulation.AddDefinitionToFunction(ref contract, content, selectionResult);
-            return contract;
-        }
-
+        abstractFilteringService.SourceManipulation.AddDefinitionToFunction(ref contract, content, filteringResult);
         return contract;
     }
 }

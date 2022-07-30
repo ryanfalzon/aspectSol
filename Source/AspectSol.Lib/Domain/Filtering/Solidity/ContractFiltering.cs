@@ -1,4 +1,5 @@
-﻿using AspectSol.Lib.Infra.Extensions;
+﻿using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Extensions;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Filtering.Solidity;
@@ -16,12 +17,12 @@ public class ContractFiltering : IContractFiltering
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    public SelectionResult FilterContractsByContractName(JToken jToken, string contractName)
+    public FilteringResult FilterContractsByContractName(JToken jToken, string contractName)
     {
         if (string.IsNullOrWhiteSpace(contractName))
             throw new ArgumentNullException(nameof(contractName));
 
-        var interestedContracts = new List<string>();
+        var filteringResult = new FilteringResult();
 
         if (jToken["nodes"] is JArray children)
         {
@@ -30,15 +31,12 @@ public class ContractFiltering : IContractFiltering
                 if (child["nodeType"].Matches(ContractDefinition) && child["contractKind"].Matches("contract") &&
                     (contractName.Equals(Wildcard) || child["name"].Matches(contractName)))
                 {
-                    interestedContracts.Add((child["name"] ?? throw new NullReferenceException()).Value<string>());
+                    filteringResult.AddContract(child["name"]?.Value<string>());
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedContracts = interestedContracts
-        };
+        return filteringResult;
     }
 
     /// <summary>
@@ -49,12 +47,12 @@ public class ContractFiltering : IContractFiltering
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    public SelectionResult FilterContractsByInterfaceName(JToken jToken, string interfaceName)
+    public FilteringResult FilterContractsByInterfaceName(JToken jToken, string interfaceName)
     {
         if (string.IsNullOrWhiteSpace(interfaceName))
             throw new ArgumentNullException(nameof(interfaceName));
 
-        var interestedContracts = new List<string>();
+        var filteringResult = new FilteringResult();
 
         if (jToken["nodes"] is JArray children)
         {
@@ -69,16 +67,13 @@ public class ContractFiltering : IContractFiltering
                         if (interfaceName.Equals(Wildcard) || (baseContract["baseName"] ?? throw new NullReferenceException()).Value<JObject>()!["name"]
                             .Matches(interfaceName))
                         {
-                            interestedContracts.Add((child["name"] ?? throw new NullReferenceException()).Value<string>());
+                            filteringResult.AddContract(child["name"]?.Value<string>());
                         }
                     }
                 }
             }
         }
 
-        return new SelectionResult
-        {
-            InterestedContracts = interestedContracts
-        };
+        return filteringResult;
     }
 }

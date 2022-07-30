@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
+using AspectSol.Lib.Domain.Filtering.FilteringResults;
 using AspectSol.Lib.Infra.Enums;
 using Newtonsoft.Json.Linq;
 
@@ -32,14 +33,14 @@ public class SelectorVariableNameNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override SelectionResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
     {
-        var selectionResult = VariableAccess switch
+        var filteringResult = VariableAccess switch
         {
             VariableAccess.Get => abstractFilteringService.VariableGettersFiltering.FilterVariableInteractionByVariableName(smartContract, VariableName),
             VariableAccess.Set => abstractFilteringService.VariableSettersFiltering.FilterVariableInteractionByVariableName(smartContract, VariableName),
             _                  => throw new ArgumentOutOfRangeException()
         };
-        return selectionResult;
+        return filteringResult;
     }
 }

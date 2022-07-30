@@ -1,5 +1,9 @@
-﻿namespace AspectSol.Lib.Infra;
+﻿namespace AspectSol.Lib.Infra.Helpers;
 
+/// <summary>
+/// A factory that places definitions and statements within the context of solidity smart contract and function code
+/// Mainly used to easily create AST objects of new code needed to be added to a smart contract
+/// </summary>
 public class SolidityPlaceholderFactory
 {
     private const string ContractStatementsPlaceholder =
@@ -17,18 +21,18 @@ public class SolidityPlaceholderFactory
         "   }\n" +
         "}";
     
-    private static readonly List<string> _contractStatementCache = new();
+    private static readonly List<string> ContractStatementCache = new();
 
     public static string GetContractStatementPlaceholder(string statement)
     {
-        _contractStatementCache.Add(statement);
+        ContractStatementCache.Add(statement);
         return ContractStatementsPlaceholder.Replace("{ContractStatements}", statement);
     }
 
     public static string GetFunctionStatementPlaceholder(string statement)
     {
         return FunctionStatementsPlaceholder
-            .Replace("{ContractStatements}", string.Join('\n', _contractStatementCache))
+            .Replace("{ContractStatements}", string.Join('\n', ContractStatementCache))
             .Replace("{FunctionStatements}", statement);
     }
 }
