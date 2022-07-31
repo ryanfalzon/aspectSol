@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AspectSol.Lib.Domain.Filtering;
 
 namespace AspectSol.Lib.Tests.Domain.Filtering.Solidity;
 

@@ -2,8 +2,6 @@
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.Filtering.FilteringResults;
-using AspectSol.Lib.Infra.Extensions;
-using AspectSol.Lib.Infra.Helpers;
 using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 

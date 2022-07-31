@@ -1,5 +1,4 @@
-﻿using AspectSol.Lib.Domain.Filtering;
-using AspectSol.Lib.Domain.Filtering.FilteringResults;
+﻿using AspectSol.Lib.Domain.Filtering.FilteringResults;
 
 namespace AspectSol.Lib.Infra.Comparers;
 
