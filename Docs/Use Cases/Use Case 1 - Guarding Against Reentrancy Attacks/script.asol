@@ -1,0 +1,17 @@
+aspect SafeReenentrancy {
+	add-to-declarations * { 
+		private bool running = false; 
+	}
+
+	before execution-of *.* { 
+		require (!running); 
+	}
+	
+	before call-to *.transfer() { 
+		running = true; 
+	}
+	
+	after call-to *.transfer() { 
+		running = false; 
+	}
+}

@@ -1,0 +1,12 @@
+aspect CasinoBusinessProcessFlow {
+	enum Mode { NoBet, GameOpen, GuessMade }	
+	private Mode mode = Mode.NoBet 
+
+	before execution-of createGame() {
+		require (mode == Mode.NoBet);
+		require (msg.sender == owner);
+	}
+	after execution-of createGame() {
+		mode = Mode.GameOpen;
+	}
+}

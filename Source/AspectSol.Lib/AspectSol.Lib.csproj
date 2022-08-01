@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<Target Name="NpmInstall" Inputs="Domain/JavascriptExecution/package.json" Outputs="Domain/JavascriptExecution/node_modules/.install-stamp">
+		<Exec Command="npm install" WorkingDirectory="Domain/JavascriptExecution/" />
+		<Touch Files="Domain/JavascriptExecution/node_modules/.install-stamp" AlwaysCreate="true" />
+	</Target>
+
+	<ItemGroup>
+		<PackageReference Include="coverlet.collector" Version="3.1.2" />
+		<PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Domain\JavascriptExecution\dist\**">
+			<TargetPath>scripts\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Domain\JavascriptExecution\node_modules\**">
+			<TargetPath>node_modules\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Domain\Ast\Selectors\Contract" />
+	</ItemGroup>
+
+</Project>
