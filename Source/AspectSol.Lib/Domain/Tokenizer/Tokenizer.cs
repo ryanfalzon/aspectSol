@@ -30,7 +30,7 @@ public class Tokenizer : AbstractTokenizer, ITokenizer
             new(TokenType.Pure, new Regex("^pure")),
             new(TokenType.View, new Regex("^view")),
             new(TokenType.Get, new Regex("^get\\s")),
-            new(TokenType.Set, new Regex("^set")),
+            new(TokenType.Set, new Regex("^set\\s")),
             new(TokenType.Aspect, new Regex("^aspect")),
             
             // AspectSol Conditions

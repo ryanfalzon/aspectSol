@@ -2,6 +2,7 @@
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 
@@ -28,10 +29,10 @@ public class ReferenceSyntaxDefinitionNode : SyntaxDefinitionNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
-        var contractSelectorFilteringResult = ContractSelector.Filter(smartContract, abstractFilteringService);
-        var functionSelectorFilteringResult = FunctionSelector?.Filter(smartContract, abstractFilteringService);
+        var contractSelectorFilteringResult = ContractSelector.Filter(smartContract, abstractFilteringService, location);
+        var functionSelectorFilteringResult = FunctionSelector?.Filter(smartContract, abstractFilteringService, location);
 
         var collationResult = functionSelectorFilteringResult == null
             ? contractSelectorFilteringResult

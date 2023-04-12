@@ -29,14 +29,13 @@ public class AspectNode : ExecutableNode
     }
 
     public override JToken Execute(JToken smartContract, AbstractFilteringService abstractFilteringService, IJavascriptExecutor javascriptExecutor,
-        TempStorageRepository tempStorageRepository, SolidityAstNodeIdResolver solidityAstNodeIdResolver)
+        TempStorageRepository tempStorageRepository)
     {
         var updatedSmartContract = smartContract;
 
         foreach (var statement in Statements)
         {
-            updatedSmartContract = statement.Execute(updatedSmartContract, abstractFilteringService, javascriptExecutor, tempStorageRepository,
-                solidityAstNodeIdResolver);
+            updatedSmartContract = statement.Execute(updatedSmartContract, abstractFilteringService, javascriptExecutor, tempStorageRepository);
         }
 
         return updatedSmartContract;

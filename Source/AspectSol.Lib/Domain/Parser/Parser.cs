@@ -552,7 +552,7 @@ public class Parser : AbstractParser, IParser
         };
     }
 
-    private FunctionNameSelectorFunctionParametersNode MatchSelectorFunctionParameters()
+    private FunctionParametersSelectorNode MatchSelectorFunctionParameters()
     {
         ValidateToken(TokenType.ArbitraryWord, "Selector function parameters must start with a function name");
         var functionName = LookaheadFirst.Value;
@@ -574,7 +574,7 @@ public class Parser : AbstractParser, IParser
 
         DiscardToken(TokenType.CloseParenthesis, "Selector function parameters must be enclosed within '()' characters. ')' character missing");
 
-        return new FunctionNameSelectorFunctionParametersNode
+        return new FunctionParametersSelectorNode
         {
             FunctionName = functionName,
             Parameters   = parameters

@@ -33,7 +33,7 @@ public class DecoratorVariableNode : DecoratorNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
         var selectionResult = VariableAccess switch
         {

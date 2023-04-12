@@ -2,6 +2,7 @@
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 
@@ -29,7 +30,7 @@ public class SelectorInterfaceContractNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
         var contractNameFilteringResult = abstractFilteringService.ContractFiltering.FilterContractsByContractName(smartContract, ContractName);
         var interfaceNameFilteringResult = abstractFilteringService.ContractFiltering.FilterContractsByInterfaceName(smartContract, InterfaceName);

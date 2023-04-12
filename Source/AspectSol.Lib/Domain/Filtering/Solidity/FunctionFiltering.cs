@@ -536,8 +536,8 @@ public class FunctionFiltering : IFunctionFiltering
                         foreach (var statement in statements)
                         {
                             if (statement["nodeType"].Matches(ExpressionStatement) && (statement["expression"]?["nodeType"].Matches(FunctionCall) ?? false) &&
-                                (statement["expression"]?["expression"]?["expression"]?["name"].Matches(instanceName) ?? false) &&
-                                statement["expression"]["expression"]["memberName"].Matches(functionName))
+                                (instanceName.Equals("*") || (statement["expression"]?["expression"]?["expression"]?["name"].Matches(instanceName) ?? false)) &&
+                                (statement["expression"]?["expression"]?["name"].Matches(functionName) ?? false))
                             {
                                 filteringResult.AddStatement(contractName, currentFunctionName, statementPosition);
                             }

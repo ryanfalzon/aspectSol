@@ -28,13 +28,13 @@ public class FilteringResult
             .Add(new DefinitionFilteringResult(definitionName));
     }
 
-    public void AddFunction(string contractName, string functionName)
+    public void AddFunction(string contractName, string functionName, List<StatementFilteringResult> statementFilteringResults = null)
     {
         if (!ContractFilteringResults.Exists(x => x.ContractName == contractName)) AddContract(contractName);
 
         ContractFilteringResults
             .Single(x => x.ContractName == contractName).FunctionFilteringResults
-            .Add(new FunctionFilteringResult(functionName));
+            .Add(new FunctionFilteringResult(functionName, statementFilteringResults));
     }
 
     public void AddStatement(string contractName, string functionName, int statementIndex)

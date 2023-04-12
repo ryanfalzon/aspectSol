@@ -3,6 +3,7 @@ using AspectSol.Lib.Domain.Ast.Modifications;
 using AspectSol.Lib.Domain.Ast.Syntax;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.JavascriptExecution;
+using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Helpers;
 using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
@@ -34,10 +35,10 @@ public class ModificationStatementNode : StatementNode
     }
 
     public override JToken Execute(JToken smartContract, AbstractFilteringService abstractFilteringService, IJavascriptExecutor javascriptExecutor,
-        TempStorageRepository tempStorageRepository, SolidityAstNodeIdResolver solidityAstNodeIdResolver)
+        TempStorageRepository tempStorageRepository)
     {
-        var syntaxDefinitionNodeReferenceResult = ReferenceSyntaxDefinitionNodeNode.Filter(smartContract, abstractFilteringService);
-        var decoratorDefinitionResult = DecoratorDefinition?.Filter(smartContract, abstractFilteringService);
+        var syntaxDefinitionNodeReferenceResult = ReferenceSyntaxDefinitionNodeNode.Filter(smartContract, abstractFilteringService, Location.ExecutionOf);
+        var decoratorDefinitionResult = DecoratorDefinition?.Filter(smartContract, abstractFilteringService, Location.ExecutionOf);
 
         var intersectionResult = FilteringResultHelpers.Intersect(syntaxDefinitionNodeReferenceResult, decoratorDefinitionResult);
         var encodedBody = EncodeBodyContent(intersectionResult, tempStorageRepository, javascriptExecutor);

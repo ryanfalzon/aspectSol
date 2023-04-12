@@ -52,8 +52,13 @@ contract CustomToken {
         return balance;
     }
 
-    function setbalance(uint256 b) public {
+    function setBalance(uint256 b) public {
         balance = b;
+    }
+
+    function placeBet(uint256 amount) public {
+        uint256 newBalance = balance - amount;
+        setBalance(newBalance);
     }
 }";
         

@@ -4,6 +4,7 @@ using AspectSol.Lib.Domain.Ast.Placements;
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.JavascriptExecution;
+using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Helpers;
 using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
@@ -38,9 +39,9 @@ public class AppendStatementNode : StatementNode
 
     // TODO - Location and sender not yet supported in the execution of this method
     public override JToken Execute(JToken smartContract, AbstractFilteringService abstractFilteringService, IJavascriptExecutor javascriptExecutor,
-        TempStorageRepository tempStorageRepository, SolidityAstNodeIdResolver solidityAstNodeIdResolver)
+        TempStorageRepository tempStorageRepository)
     {
-        var filteringResults = Selectors.Select(x => x.Filter(smartContract, abstractFilteringService)).ToArray();
+        var filteringResults = Location.Evaluate(smartContract, abstractFilteringService, Selectors);
         var intersectionResult = FilteringResultHelpers.Intersect(filteringResults);
         var encodedBody = EncodeBodyContent(intersectionResult, tempStorageRepository, javascriptExecutor);
         

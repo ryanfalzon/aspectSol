@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Enums;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast;
@@ -24,7 +25,7 @@ public class SelectorVariableConstantKeyNode : SelectorKeyNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
         // TODO - No filtering for constant key selector yet built
         throw new NotImplementedException("No filtering for constant key selector yet built");

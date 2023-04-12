@@ -28,7 +28,7 @@ public class SelectorInterfaceFunctionNameNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
         var invert = InterfaceTagNode.Value == InterfaceTag.NotInInterface;
         

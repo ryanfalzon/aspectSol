@@ -33,7 +33,7 @@ public class Interpreter : IInterpreter
         var parsedContract = JToken.Parse(deserializedResponse?.Data ?? string.Empty);
         var contractAst = parsedContract["sources"]?.First?.First?["ast"];
 
-        aspectNode.Execute(contractAst, _abstractFilteringService, _javascriptExecutor, _tempStorageRepository, _solidityAstNodeIdResolver);
+        aspectNode.Execute(contractAst, _abstractFilteringService, _javascriptExecutor, _tempStorageRepository);
         var code = await _javascriptExecutor.Execute("generateCode", new object[] {_solidityAstNodeIdResolver.UpdateNodeIdentifiers(JsonConvert.SerializeObject(parsedContract))});
 
         return code;

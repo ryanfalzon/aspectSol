@@ -1,6 +1,9 @@
-﻿using System.Text;
+﻿using System.Reflection.Metadata;
+using System.Text;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Enums;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 
 namespace AspectSol.Lib.Domain.Ast.Selectors.Function;
@@ -24,9 +27,14 @@ public class FunctionNameSelectorNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
-        var selectionResult = abstractFilteringService.FunctionFiltering.FilterFunctionsByFunctionName(smartContract, FunctionName);
-        return selectionResult;
+        var filteringResult = location switch
+        {
+            Location.CallTo      => abstractFilteringService.FunctionFiltering.FilterFunctionCallsByInstanceName(smartContract, "*", FunctionName),
+            Location.ExecutionOf => abstractFilteringService.FunctionFiltering.FilterFunctionsByFunctionName(smartContract, FunctionName),
+            _                    => throw new NotSupportedException($"Location '{location}' is not supported")
+        };
+        return filteringResult;
     }
 }

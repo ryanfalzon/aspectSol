@@ -31,7 +31,7 @@ public class SelectorVariableDictionaryElementNameNode : SelectorVariableNameNod
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
         // TODO - No filtering for dictionary element variable name selector yet built
         throw new NotImplementedException("No filtering for dictionary element variable name selector yet built");

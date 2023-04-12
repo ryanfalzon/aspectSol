@@ -36,7 +36,7 @@ public static class FunctionFilteringResultHelpers
             {
                 if (secondary.ContractFilteringResults.Exists(x => x.ContractName.Equals(primaryContract.ContractName)))
                 {
-                    collation.AddFunction(primaryContract.ContractName, primaryFunction.FunctionName);
+                    collation.AddFunction(primaryContract.ContractName, primaryFunction.FunctionName, primaryFunction.StatementFilteringResults);
                 }
             }
         }

@@ -32,7 +32,7 @@ public class SyntaxModifierNode : SyntaxNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
         FilteringResult modifierFilteringResult;
         
@@ -67,7 +67,7 @@ public class SyntaxModifierNode : SyntaxNode
             else
             {
                 var leftFilteringResult = abstractFilteringService.FunctionFiltering.FilterFunctionsByModifier(smartContract, leftModifierName, false);
-                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService);
+                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService, location);
 
                 modifierFilteringResult = Operator switch
                 {
@@ -81,12 +81,12 @@ public class SyntaxModifierNode : SyntaxNode
         {
             if (Right is null)
             {
-                modifierFilteringResult = Left.Filter(smartContract, abstractFilteringService);
+                modifierFilteringResult = Left.Filter(smartContract, abstractFilteringService, location);
             }
             else if (Right.GetType() == typeof(ModifierNode))
             {
-                var leftFilteringResult = Left.Filter(smartContract, abstractFilteringService);
-                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService);
+                var leftFilteringResult = Left.Filter(smartContract, abstractFilteringService, location);
+                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService, location);
 
                 modifierFilteringResult = Operator switch
                 {
@@ -97,8 +97,8 @@ public class SyntaxModifierNode : SyntaxNode
             }
             else
             {
-                var leftFilteringResult = Left.Filter(smartContract, abstractFilteringService);
-                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService);
+                var leftFilteringResult = Left.Filter(smartContract, abstractFilteringService, location);
+                var rightFilteringResult = Right.Filter(smartContract, abstractFilteringService, location);
 
                 modifierFilteringResult = Operator switch
                 {

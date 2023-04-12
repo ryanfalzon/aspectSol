@@ -2,6 +2,7 @@
 using AspectSol.Lib.Domain.Ast.Selectors;
 using AspectSol.Lib.Domain.Filtering;
 using AspectSol.Lib.Domain.Filtering.FilteringResults;
+using AspectSol.Lib.Infra.Enums;
 using AspectSol.Lib.Infra.Helpers.FilteringResults;
 using Newtonsoft.Json.Linq;
 
@@ -38,12 +39,12 @@ public class SelectorVariableNode : SelectorNode
         return stringBuilder.ToString();
     }
 
-    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService)
+    public override FilteringResult Filter(JToken smartContract, AbstractFilteringService abstractFilteringService, Location location)
     {
-        var variableTypeFilteringResult = VariableType.Filter(smartContract, abstractFilteringService);
-        var variableLocationFilteringResult = VariableLocation.Filter(smartContract, abstractFilteringService);
-        var variableNameSelectorFilteringResult = VariableNameSelector.Filter(smartContract, abstractFilteringService);
-        var variableDecoratorFilteringResult = DecoratorVariable.Filter(smartContract, abstractFilteringService);
+        var variableTypeFilteringResult = VariableType.Filter(smartContract, abstractFilteringService, location);
+        var variableLocationFilteringResult = VariableLocation.Filter(smartContract, abstractFilteringService, location);
+        var variableNameSelectorFilteringResult = VariableNameSelector.Filter(smartContract, abstractFilteringService, location);
+        var variableDecoratorFilteringResult = DecoratorVariable.Filter(smartContract, abstractFilteringService, location);
 
         var intersectionResult = FilteringResultHelpers.Intersect(variableTypeFilteringResult, variableLocationFilteringResult,
             variableNameSelectorFilteringResult, variableDecoratorFilteringResult);

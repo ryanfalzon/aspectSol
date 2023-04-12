@@ -5,10 +5,10 @@ public class FunctionFilteringResult
     public string FunctionName { get; }
     public List<StatementFilteringResult> StatementFilteringResults { get; private set; }
 
-    public FunctionFilteringResult(string functionName)
+    public FunctionFilteringResult(string functionName, List<StatementFilteringResult> statementFilteringResults = null)
     {
         FunctionName              = functionName;
-        StatementFilteringResults = new List<StatementFilteringResult>();
+        StatementFilteringResults = statementFilteringResults ?? new List<StatementFilteringResult>();
     }
     
     public void ReplaceStatementFilteringResults(List<StatementFilteringResult> statementFilteringResults)
